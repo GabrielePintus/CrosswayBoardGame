@@ -71,6 +71,17 @@ public class CrosswayController {
                 try {
                     game.placeStone(p, currentPlayer);
                     view.repaint();
+
+                    // Check for win condition
+                    if (game.hasWon(currentPlayer)){
+                        JOptionPane.showMessageDialog(
+                            view,
+                    currentPlayer + " won!",
+                        "Alert",
+                            JOptionPane.WARNING_MESSAGE
+                        );
+                    }
+
                     // Switch player
                     currentPlayer = currentPlayer.opposite();
                 } catch (IllegalArgumentException ex) {
@@ -79,6 +90,18 @@ public class CrosswayController {
                 }
             }
         });
+    }
+
+    private void makeMove(Point p) {
+        try {
+            game.placeStone(p, currentPlayer);
+            view.repaint();
+            // Switch player
+            currentPlayer = currentPlayer.opposite();
+        } catch (IllegalArgumentException ex) {
+            // Click outside bounds or invalid move: ignore
+            alert(ex.getMessage());
+        }
     }
 
     private Point getPointFromMouse(MouseEvent e) {
