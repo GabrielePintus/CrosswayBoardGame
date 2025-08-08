@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Board {
+
     public enum Color {
         NONE, WHITE, BLACK
     }
@@ -35,5 +36,8 @@ public class Board {
     }
     public Stone getStone(final Point point) {
         return stones.get(point);
+    }
+    public Stone getStone(int r, int c) {
+        return stones.get(new Point(r, c));
     }
 }
