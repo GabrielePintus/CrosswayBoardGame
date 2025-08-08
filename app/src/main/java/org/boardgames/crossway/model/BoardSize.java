@@ -1,7 +1,42 @@
 package org.boardgames.crossway.model;
 
-public class BoardSize {
-    static short SMALL = 12;
-    static short REGULAR = 19;
-    static short LARGE = 26;
+/**
+ * Immutable class representing the size of a square board.
+ */
+public record BoardSize(int size) {
+
+    /**
+     * Small board (9x9).
+     */
+    public static final BoardSize SMALL   = new BoardSize(9);
+    /**
+     * Regular board (19x19), standard Go board size.
+     */
+    public static final BoardSize REGULAR = new BoardSize(19);
+    /**
+     * Large board (25x25).
+     */
+    public static final BoardSize LARGE   = new BoardSize(25);
+
+    /**
+     * Returns the width of the board (same as height).
+     */
+    public int size() {
+        return size;
+    }
+
+    /**
+     * Checks whether a point is within the square board boundaries.
+     *
+     * @param point the point to check
+     * @return true if the point lies within the board, false otherwise
+     */
+    public boolean isInBounds(Point point) {
+        return point.x() >= 0 && point.x() < size &&
+               point.y() >= 0 && point.y() < size;
+    }
+
+    public int toInt() {
+        return size;
+    }
 }

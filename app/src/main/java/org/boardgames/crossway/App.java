@@ -9,8 +9,7 @@ import javax.swing.SwingUtilities;
 public class App {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            CrosswayController app = new CrosswayController((short) 8); // default size
-            app.init();
+            CrosswayController app = new CrosswayController(); // default size
         });
     }
 }

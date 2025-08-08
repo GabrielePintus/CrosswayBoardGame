@@ -1,43 +1,88 @@
 package org.boardgames.crossway.model;
 
+import org.boardgames.crossway.model.BoardSize;
+import org.boardgames.crossway.model.Point;
+import org.boardgames.crossway.model.Stone;
+
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Represents the Go board with a fixed size.
+ * Manages the placement and state of stones on the board.
+ */
 public class Board {
+    private final BoardSize size;
+    private final Map<Point, Stone> grid;
 
-    public enum Color {
-        NONE, WHITE, BLACK
+    /**
+     * Constructs a new empty board of a given size.
+     *
+     * @param size the size of the board
+     */
+    public Board(BoardSize size) {
+        this.size = size;
+        this.grid = new HashMap<>();
     }
 
-    private final short boardSize;
-    private final HashMap<Point, Stone> stones;
-
-    /*
-        CONSTRUCTORS
-    */
-    public Board(final short boardSize) {
-        assert boardSize > 1 : "Board size must be greater than 1";
-        this.boardSize = boardSize;
-
-        this.stones = new HashMap<Point, Stone>();
-    }
-
-
-    // Other methods
-    public short getSize() {
-        return boardSize;
-    }
-
-    public void addStone(final Stone stone) {
-        if (stone.row() >= boardSize || stone.col() >= boardSize) {
-            throw new IllegalArgumentException("Stone position out of bounds");
+    /**
+     * Places a stone at a specified point on the board.
+     *
+     * @param point the point to place the stone
+     * @param stone the stone to place
+     */
+    public void placeStone(Point point, Stone stone) {
+        if (!isOnBoard(point)) {
+            throw new IllegalArgumentException("Point is out of bounds: " + point);
+        }else{
+            grid.put(point, stone);
         }
-        stones.put(new Point(stone.row(), stone.col()), stone);
     }
-    public Stone getStone(final Point point) {
-        return stones.get(point);
+
+    /**
+     * Retrieves the stone at a given point.
+     *
+     * @param point the point on the board
+     * @return the stone at that point, or null if empty
+     */
+    public Stone getStone(Point point) {
+        return grid.get(point);
     }
-    public Stone getStone(int r, int c) {
-        return stones.get(new Point(r, c));
+
+    /**
+     * Check wether a point is occupied by a stone.
+     *
+     * @param point the point to check
+     * @return true if occupied, false otherwise
+     */
+    public boolean isOccupied(Point point) {
+        return grid.containsKey(point);
+    }
+    /**
+     * Check whether a point is not occupied by a stone.
+     *
+     * @param point the point to check
+     * @return true if empty, false otherwise
+     */
+    public boolean isEmpty(Point point) {
+        return !grid.containsKey(point) && isOnBoard(point);
+    }
+
+    /**
+     * Checks whether the given point is within the bounds of the board.
+     *
+     * @param point the point to check
+     * @return true if within bounds, false otherwise
+     */
+    public boolean isOnBoard(Point point) {
+        return size.isInBounds(point);
+    }
+    /**
+     * Gets the board size.
+     *
+     * @return the size of the board
+     */
+    public BoardSize getSize() {
+        return size;
     }
 }
