@@ -6,6 +6,11 @@ package org.boardgames.crossway.model;
 public record BoardSize(int size) {
 
     /**
+     * Tiny board (5x5).
+     */
+    public static final BoardSize TINY   = new BoardSize(5);
+
+    /**
      * Small board (9x9).
      */
     public static final BoardSize SMALL   = new BoardSize(9);
