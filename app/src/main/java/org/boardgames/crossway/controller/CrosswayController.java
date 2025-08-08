@@ -1,4 +1,3 @@
-// CrosswayController.java
 package org.boardgames.crossway.controller;
 
 import org.boardgames.crossway.model.BoardSize;
@@ -6,116 +5,182 @@ import org.boardgames.crossway.model.Game;
 import org.boardgames.crossway.model.Point;
 import org.boardgames.crossway.model.Stone;
 import org.boardgames.crossway.ui.BoardView;
+
 import javax.swing.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
- * Controller: handles user input and updates model and view.
+ * Controller for Crossway. Manages user input, menu actions, and updates
+ * the Game model and BoardView, ensuring board resizing works correctly.
  */
 public class CrosswayController {
-    private final Game game;
-    private final BoardView view;
-    private Stone currentPlayer = Stone.BLACK;
+    private Game game;
+    private BoardView view;
+    private JFrame frame;
+    private Stone currentPlayer = Stone.BLACK;  // BLACK starts by default
+    private int boardSize;
 
+    /**
+     * Constructs controller with a custom board size.
+     * @param boardSize board dimension (NxN)
+     */
     public CrosswayController(int boardSize) {
-        // Initialize model and view
-        this.game = new Game(new BoardSize(boardSize));
-        this.view = new BoardView(game.getBoard());
-        initView();
-        bindEvents();
-    }
-    public CrosswayController(BoardSize boardSize) {
-        // Initialize model and view
-        this.game = new Game(boardSize);
-        this.view = new BoardView(game.getBoard());
-        initView();
-        bindEvents();
-    }
-    public CrosswayController() {
-        this.game = new Game(BoardSize.REGULAR);
-        this.view = new BoardView(game.getBoard());
+        this.boardSize = boardSize;
+        initializeGame();
         initView();
         bindEvents();
     }
 
     /**
-     * Sets up and displays the main window.
+     * Constructs controller using a predefined BoardSize.
+     */
+    public CrosswayController(BoardSize size) {
+        this(size.size());
+    }
+
+    /**
+     * Constructs controller with standard 19x19 board.
+     */
+    public CrosswayController() {
+        this(BoardSize.REGULAR);
+    }
+
+    /**
+     * Initializes the Game model and BoardView based on boardSize.
+     */
+    private void initializeGame() {
+        game = new Game(new BoardSize(boardSize));
+        view = new BoardView(game.getBoard());
+    }
+
+    /**
+     * Builds and displays the main JFrame, assigning frame field.
      */
     private void initView() {
-        JFrame frame = new JFrame("Crossway");
+        frame = new JFrame("Crossway");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setResizable(false);          // ← Disable manual resizing
+        frame.setJMenuBar(createMenuBar());
         frame.add(view);
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }
 
-    /** Initializes the view and binds events.
-     *  This method is called after the view is created.
+    /**
+     * Creates the menu bar with New Game, Restart, and Exit.
      */
-    public void init() {
-        initView();
-        bindEvents();
+    private JMenuBar createMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
+        JMenu gameMenu = new JMenu("Game");
+
+        JMenuItem newGame = new JMenuItem("New Game");
+        newGame.addActionListener(e -> promptNewGame());
+        JMenuItem restart = new JMenuItem("Restart");
+        restart.addActionListener(e -> restartGame());
+        JMenuItem exit = new JMenuItem("Exit");
+        exit.addActionListener(e -> System.exit(0));
+
+        gameMenu.add(newGame);
+        gameMenu.add(restart);
+        gameMenu.add(exit);
+        menuBar.add(gameMenu);
+        return menuBar;
     }
 
-
     /**
-     * Attaches mouse listener to the board view for handling clicks.
+     * Attaches mouse listener to BoardView for placing stones.
      */
     private void bindEvents() {
         view.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                Point p = getPointFromMouse(e);
-                makeMove(p);
-                boolean win = game.hasWon(currentPlayer);
-                if (win) {
-                    // Popup that tells the user who won
-                    // Two buttons: "New Game" and "Exit"
-                    String message = currentPlayer + " wins!";
-                    int option = JOptionPane.showOptionDialog(view, message, "Game Over",
-                            JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE,
-                            null, new String[]{"New Game", "Exit"}, "New Game");
-                    if (option == JOptionPane.YES_OPTION) {
-                        // Start a new game
-                        game.reset();
-                        view.repaint();
-                        currentPlayer = Stone.BLACK;
-                    } else {
-                        // Exit the application
-                        System.exit(0);
+                Point p = toBoardPoint(e);
+                try {
+                    game.placeStone(p, currentPlayer);
+                    view.repaint();
+                } catch (IllegalArgumentException ex) {
+                    JOptionPane.showMessageDialog(
+                            frame,
+                            ex.getMessage(),
+                            "Invalid Move",
+                            JOptionPane.WARNING_MESSAGE
+                    );
+                    return;
+                }
+
+                if (game.hasWon(currentPlayer)) {
+                    int choice = JOptionPane.showOptionDialog(
+                            frame,
+                            currentPlayer + " wins!",
+                            "Game Over",
+                            JOptionPane.DEFAULT_OPTION,
+                            JOptionPane.INFORMATION_MESSAGE,
+                            null,
+                            new String[]{"New Game", "Restart", "Exit"},
+                            "Restart"
+                    );
+                    switch (choice) {
+                        case 0 -> promptNewGame();  // New Game
+                        case 1 -> restartGame();     // Restart
+                        case 2, -1 -> System.exit(0); // Exit or close dialog
                     }
-                }else{
+                } else {
                     currentPlayer = currentPlayer.opposite();
                 }
             }
         });
     }
 
-    private void makeMove(Point p) {
-        try {
-            game.placeStone(p, currentPlayer);
-            view.repaint();
-        } catch (IllegalArgumentException ex) {
-            // Click outside bounds or invalid move: ignore
-            alert(ex.getMessage());
+    /**
+     * Converts MouseEvent coordinates to board Point.
+     */
+    private Point toBoardPoint(MouseEvent e) {
+        int cell = view.getCellSize();
+        return new Point(e.getX() / cell, e.getY() / cell);
+    }
+
+    /**
+     * Prompts user to select a board size and starts a new game.
+     */
+    private void promptNewGame() {
+        String[] options = {"Tiny (5x5)", "Small (9x9)", "Regular (19x19)", "Large (25x25)"};
+        int sel = JOptionPane.showOptionDialog(
+                frame,
+                "Select board size:",
+                "New Game",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[2]
+        );
+        if (sel < 0 || sel >= options.length) return;
+        switch (sel) {
+            case 0 -> boardSize = 5;
+            case 1 -> boardSize = BoardSize.SMALL.size();
+            case 2 -> boardSize = BoardSize.REGULAR.size();
+            case 3 -> boardSize = BoardSize.LARGE.size();
         }
+        restartGame();
     }
 
-
-    private Point getPointFromMouse(MouseEvent e) {
-        int cellSize = view.getCellSize();
-        int col = e.getX() / cellSize;
-        int row = e.getY() / cellSize;
-        return new Point(col, row);
-    }
-
-    private void alert(String message) {
-        JOptionPane.showMessageDialog(view, message, "Alert", JOptionPane.WARNING_MESSAGE);
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new CrosswayController(11));
+    /**
+     * Restarts the game while retaining the current board size.
+     */
+    /**
+     * Restarts the game while retaining the current board size.
+     * Resizes the window to fit the new board view.
+     */
+    private void restartGame() {
+        initializeGame();
+        frame.getContentPane().removeAll();
+        frame.add(view);
+        frame.pack();  // Adjust window size to new board dimensions
+        bindEvents();
+        frame.revalidate();
+        frame.repaint();
+        currentPlayer = Stone.BLACK;
     }
 }
