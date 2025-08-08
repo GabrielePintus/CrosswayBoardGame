@@ -1,12 +1,19 @@
 package org.boardgames.crossway.model;
 
+/**
+ * Enum representing the two types of stones used in the game,
+ * along with a helper for switching turns.
+ */
+public enum Stone {
+    BLACK,
+    WHITE;
 
-
-
-public record Stone(int row, int col, Board.Color color) {
-    public Stone {
-        if (row < 0 || col < 0) throw new IllegalArgumentException("Invalid position");
+    /**
+     * Returns the opposite stone type.
+     *
+     * @return the other stone type
+     */
+    public Stone opposite() {
+        return this == BLACK ? WHITE : BLACK;
     }
 }
-
-
