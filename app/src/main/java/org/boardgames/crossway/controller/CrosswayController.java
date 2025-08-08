@@ -16,7 +16,7 @@ import java.awt.event.MouseEvent;
 public class CrosswayController {
     private final Game game;
     private final BoardView view;
-    private Stone currentPlayer = Stone.WHITE;
+    private Stone currentPlayer = Stone.BLACK;
 
     public CrosswayController(int boardSize) {
         // Initialize model and view
@@ -68,25 +68,26 @@ public class CrosswayController {
             @Override
             public void mouseClicked(MouseEvent e) {
                 Point p = getPointFromMouse(e);
-                try {
-                    game.placeStone(p, currentPlayer);
-                    view.repaint();
-
-                    // Check for win condition
-                    if (game.hasWon(currentPlayer)){
-                        JOptionPane.showMessageDialog(
-                            view,
-                    currentPlayer + " won!",
-                        "Alert",
-                            JOptionPane.WARNING_MESSAGE
-                        );
+                makeMove(p);
+                boolean win = game.hasWon(currentPlayer);
+                if (win) {
+                    // Popup that tells the user who won
+                    // Two buttons: "New Game" and "Exit"
+                    String message = currentPlayer + " wins!";
+                    int option = JOptionPane.showOptionDialog(view, message, "Game Over",
+                            JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE,
+                            null, new String[]{"New Game", "Exit"}, "New Game");
+                    if (option == JOptionPane.YES_OPTION) {
+                        // Start a new game
+                        game.reset();
+                        view.repaint();
+                        currentPlayer = Stone.BLACK;
+                    } else {
+                        // Exit the application
+                        System.exit(0);
                     }
-
-                    // Switch player
+                }else{
                     currentPlayer = currentPlayer.opposite();
-                } catch (IllegalArgumentException ex) {
-                    // Click outside bounds or invalid move: ignore
-                    alert(ex.getMessage());
                 }
             }
         });
@@ -96,13 +97,12 @@ public class CrosswayController {
         try {
             game.placeStone(p, currentPlayer);
             view.repaint();
-            // Switch player
-            currentPlayer = currentPlayer.opposite();
         } catch (IllegalArgumentException ex) {
             // Click outside bounds or invalid move: ignore
             alert(ex.getMessage());
         }
     }
+
 
     private Point getPointFromMouse(MouseEvent e) {
         int cellSize = view.getCellSize();

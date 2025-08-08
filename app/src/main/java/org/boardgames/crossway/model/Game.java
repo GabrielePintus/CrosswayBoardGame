@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
  */
 public class Game {
     private final Board board;
-    private final DisjointSet<Point> uf = new DisjointSet<>();
+    private DisjointSet<Point> uf = new DisjointSet<Point>();
 
     // Virtual border nodes for Union-Find
     private static final Point WHITE_WEST  = new Point(-1, -1);
@@ -42,6 +42,18 @@ public class Game {
 
     public Game(BoardSize boardSize) {
         this(new Board(boardSize));
+    }
+
+
+    public void reset() {
+        board.clear();
+        this.uf = new DisjointSet<Point>(); // Reset Union-Find structure
+        // Re-register virtual border nodes
+        uf.makeSet(WHITE_WEST);
+        uf.makeSet(WHITE_EAST);
+        uf.makeSet(BLACK_NORTH);
+        uf.makeSet(BLACK_SOUTH);
+
     }
 
     /**

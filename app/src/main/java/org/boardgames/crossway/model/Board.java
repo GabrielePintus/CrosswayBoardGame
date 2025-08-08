@@ -26,6 +26,13 @@ public class Board {
     }
 
     /**
+     * Clear the board by removing all stones.
+     */
+    public void clear() {
+        grid.clear();
+    }
+
+    /**
      * Places a stone at a specified point on the board.
      *
      * @param point the point to place the stone
