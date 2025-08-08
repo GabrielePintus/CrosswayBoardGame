@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
  * track connectivity for efficient win detection.
  */
 public class Game {
-    private final Board board;
+    private Board board;
     private DisjointSet<Point> uf = new DisjointSet<Point>();
 
     // Virtual border nodes for Union-Find
@@ -62,6 +62,8 @@ public class Game {
     public Board getBoard() {
         return board;
     }
+
+    public void setBoardSize(BoardSize boardSize) {this.board = new Board(boardSize);}
 
     /**
      * Places a stone of the given color at the specified point.

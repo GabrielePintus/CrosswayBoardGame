@@ -1,6 +1,8 @@
 package org.boardgames.crossway;
 
 import org.boardgames.crossway.controller.CrosswayController;
+import org.boardgames.crossway.model.BoardSize;
+
 import javax.swing.SwingUtilities;
 
 /**
@@ -9,7 +11,7 @@ import javax.swing.SwingUtilities;
 public class App {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            CrosswayController app = new CrosswayController(); // default size
+            CrosswayController app = new CrosswayController(BoardSize.TINY); // default size
         });
     }
 }
