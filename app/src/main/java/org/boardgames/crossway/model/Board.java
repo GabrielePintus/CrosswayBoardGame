@@ -92,4 +92,12 @@ public class Board {
     public BoardSize getSize() {
         return size;
     }
+
+    public void clearCell(Point last) {
+        if (grid.containsKey(last)) {
+            grid.remove(last);
+        } else {
+            throw new IllegalArgumentException("No stone at point: " + last);
+        }
+    }
 }
