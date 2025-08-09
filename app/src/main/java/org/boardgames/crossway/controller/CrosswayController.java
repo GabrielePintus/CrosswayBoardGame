@@ -95,7 +95,7 @@ public class CrosswayController {
     private void bindEvents() {
         view.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(MouseEvent e) {
+            public void mouseReleased(MouseEvent e) {
                 Point p = toBoardPoint(e);
                 try {
                     game.placeStone(p, currentPlayer);
