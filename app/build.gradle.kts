@@ -41,3 +41,8 @@ tasks.named<Test>("test") {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
 }
+
+tasks.named<Zip>("distZip") {
+    archiveFileName.set("CrossWay-1.0-BETA.zip")
+}
+
