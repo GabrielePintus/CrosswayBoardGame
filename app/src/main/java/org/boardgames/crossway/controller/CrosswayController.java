@@ -73,8 +73,9 @@ public class CrosswayController {
      */
     private JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
-        JMenu gameMenu = new JMenu("Game");
 
+        // Left-aligned "Game" menu
+        JMenu gameMenu = new JMenu("Game");
         JMenuItem newGame = new JMenuItem("New Game");
         newGame.addActionListener(e -> promptNewGame());
         JMenuItem restart = new JMenuItem("Restart");
@@ -86,8 +87,33 @@ public class CrosswayController {
         gameMenu.add(restart);
         gameMenu.add(exit);
         menuBar.add(gameMenu);
+
+        // Push everything after this to the right
+        menuBar.add(Box.createHorizontalGlue());
+
+        // Right-aligned "Undo" button
+        JButton undoButton = new JButton("Undo");
+        undoButton.addActionListener(e -> undoMove());
+        menuBar.add(undoButton);
+
         return menuBar;
     }
+
+    private void undoMove() {
+        try {
+            game.undoLastMove();
+            currentPlayer = currentPlayer.opposite();
+            view.repaint();
+        } catch (IllegalStateException ex) {
+            JOptionPane.showMessageDialog(
+                    frame,
+                    "No moves to undo.",
+                    "Undo",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        }
+    }
+
 
     /**
      * Attaches mouse listener to BoardView for placing stones.

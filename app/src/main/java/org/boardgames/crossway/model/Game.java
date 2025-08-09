@@ -1,5 +1,6 @@
 package org.boardgames.crossway.model;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -11,6 +12,7 @@ import java.util.stream.Collectors;
 public class Game {
     private Board board;
     private DisjointSet<Point> uf = new DisjointSet<Point>();
+    private ArrayList<Point> history = new ArrayList<Point>();
 
     // Virtual border nodes for Union-Find
     private static final Point WHITE_WEST  = new Point(-1, -1);
@@ -56,6 +58,31 @@ public class Game {
 
     }
 
+    public void undoLastMove() {
+        if (history.isEmpty()) {
+            throw new IllegalStateException("No moves to undo.");
+        }
+
+        // Remove the last move from history and board
+        Point last = history.remove(history.size() - 1);
+        board.clearCell(last);
+
+        // Rebuild the Union-Find structure from scratch
+        uf = new DisjointSet<>();
+        uf.makeSet(WHITE_WEST);
+        uf.makeSet(WHITE_EAST);
+        uf.makeSet(BLACK_NORTH);
+        uf.makeSet(BLACK_SOUTH);
+
+        // Replay all remaining moves in order
+        for (Point p : history) {
+            Stone s = board.getStone(p);
+            uf.makeSet(p);
+            unionWithNeighbors(p, s);
+            unionWithBorders(p, s);
+        }
+    }
+
     /**
      * @return the underlying board
      */
@@ -83,6 +110,8 @@ public class Game {
 
         unionWithNeighbors(point, stone);
         unionWithBorders(point, stone);
+
+        history.add(point); // Track the move for potential undo
     }
 
     /**
@@ -196,4 +225,5 @@ public class Game {
         return (s00 == stone && s11 == stone && s01 == other && s10 == other)
                 || (s01 == stone && s10 == stone && s00 == other && s11 == other);
     }
+
 }
