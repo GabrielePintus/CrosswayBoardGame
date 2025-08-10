@@ -11,7 +11,7 @@ import javax.swing.SwingUtilities;
 public class App {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            CrosswayController app = new CrosswayController(BoardSize.TINY); // default size
+            CrosswayController app = new CrosswayController(BoardSize.REGULAR); // default size
         });
     }
 }

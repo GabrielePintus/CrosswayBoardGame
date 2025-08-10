@@ -251,6 +251,15 @@ public class Game implements Exportable {
     // ========== Game State Queries ==========
 
     /**
+     * Gets the complete move history as a list.
+     *
+     * @return list of moves in chronological order
+     */
+    public List<Move> getMoveHistory() {
+        return history.getPastMoves();
+    }
+
+    /**
      * Gets the stone color of the player whose turn it is.
      *
      * @return the current player's stone color
