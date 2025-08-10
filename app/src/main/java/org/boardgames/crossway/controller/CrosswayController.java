@@ -1,9 +1,6 @@
 package org.boardgames.crossway.controller;
 
-import org.boardgames.crossway.model.BoardSize;
-import org.boardgames.crossway.model.Game;
-import org.boardgames.crossway.model.Point;
-import org.boardgames.crossway.model.Stone;
+import org.boardgames.crossway.model.*;
 import org.boardgames.crossway.ui.BoardView;
 
 import javax.swing.*;
@@ -124,7 +121,7 @@ public class CrosswayController {
             public void mouseReleased(MouseEvent e) {
                 Point p = toBoardPoint(e);
                 try {
-                    game.placeStone(p, currentPlayer);
+                    game.makeMove(new Move(p, currentPlayer));
                     view.repaint();
                 } catch (IllegalArgumentException ex) {
                     JOptionPane.showMessageDialog(

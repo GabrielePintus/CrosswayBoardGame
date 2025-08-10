@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 public class Game {
     private Board board;
     private DisjointSet<Point> uf = new DisjointSet<Point>();
-//    private ArrayList<Point> history = new ArrayList<Point>();
     private Deque<Move> history = new ArrayDeque<Move>();
 
     // Virtual border nodes for Union-Find
@@ -63,7 +62,6 @@ public class Game {
         }
 
         // Remove the last move from history and board
-//        Point last = history.remove(history.size() - 1);
         Move lastMove = history.removeLast();
         board.clearCell(lastMove.getPoint());
 
@@ -91,30 +89,21 @@ public class Game {
         return board;
     }
 
-    public void setBoardSize(BoardSize boardSize) {this.board = new Board(boardSize);}
-
-    /**
-     * Places a stone of the given color at the specified point.
-     * Unions it with adjacent same-colored stones and border nodes.
-     *
-     * @param point the board coordinate
-     * @param stone the stone color
-     * @throws IllegalArgumentException if point is out of bounds
-     */
-    public void placeStone(Point point, Stone stone) {
-        boolean valid = validateMove(point, stone);
-        if (!valid) {
-            throw new IllegalArgumentException("Invalid point for placing stone: " + point);
+    public void makeMove(Move move) {
+        if (!validateMove(move)) {
+            throw new IllegalArgumentException("Invalid point for placing stone: " + move.getPoint());
         }
-        board.placeStone(point, stone);
-        uf.makeSet(point);
 
-        unionWithNeighbors(point, stone);
-        unionWithBorders(point, stone);
+        board.placeStone(move.getPoint(), move.getStone());
 
-//        history.add(point); // Track the move for potential undo
-        history.add(new Move(point, stone));
+        // Register the point in Union-Find
+        uf.makeSet(move.getPoint());
+        unionWithNeighbors(move.getPoint(), move.getStone());
+        unionWithBorders(move.getPoint(), move.getStone());
+
+        history.add(move); // Track the move for potential undo
     }
+
 
     /**
      * Checks if the given color has formed a connected path across.
@@ -139,11 +128,11 @@ public class Game {
         return inBounds && isEmpty;
     }
 
-    private boolean validateMove(Point point, Stone stone) {
+    private boolean validateMove(Move move) {
         // Check if the point is on the board and empty
-        boolean isPointValid = validatePoint(point);
+        boolean isPointValid = validatePoint(move.getPoint());
         // Check for forbidden 2x2 patterns
-        boolean isPatternViolated = enforceNoForbiddenPattern(point, stone);
+        boolean isPatternViolated = enforceNoForbiddenPattern(move);
 
         return isPointValid && !isPatternViolated;
     }
@@ -178,10 +167,10 @@ public class Game {
     /**
      * Enforces that no forbidden 2x2 pattern (as in Fig.2) is formed by this placement.
      */
-    private boolean enforceNoForbiddenPattern(Point point, Stone stone) {
-        List<Point> blocks = getTopLeftCorners(point);
+    private boolean enforceNoForbiddenPattern(Move move) {
+        List<Point> blocks = getTopLeftCorners(move.getPoint());
         for (Point topLeft : blocks) {
-            if (isForbiddenBlock(topLeft, point, stone)) {
+            if (isForbiddenBlock(topLeft, move.getPoint(), move.getStone())) {
                 return true; // Pattern is violated
             }
         }
