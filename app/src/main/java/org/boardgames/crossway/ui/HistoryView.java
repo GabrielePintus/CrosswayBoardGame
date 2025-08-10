@@ -42,6 +42,10 @@ public class HistoryView extends JPanel {
         setVisible(false);
     }
 
+    /**
+     * Toggles the visibility of the history view panel.
+     * Expands to show move history or collapses to hide it.
+     */
     public void toggleVisibility() {
         isVisible = !isVisible;
 
@@ -61,10 +65,20 @@ public class HistoryView extends JPanel {
         }
     }
 
+    /**
+     * Checks whether the history view is currently visible.
+     *
+     * @return true if the history view is visible, false otherwise
+     */
     public boolean isHistoryVisible() {
         return isVisible;
     }
 
+    /**
+     * Updates the displayed move history.
+     *
+     * @param moves the list of moves to display in the history view
+     */
     public void updateHistory(List<Move> moves) {
         listModel.clear();
         for (int i = 0; i < moves.size(); i++) {
@@ -84,6 +98,11 @@ public class HistoryView extends JPanel {
         }
     }
 
+    /**
+     * Gets the width of the history view when expanded.
+     *
+     * @return the expanded width in pixels
+     */
     public int getExpandedWidth() {
         return EXPANDED_WIDTH;
     }
