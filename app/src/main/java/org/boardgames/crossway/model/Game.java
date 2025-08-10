@@ -10,24 +10,11 @@ import java.util.stream.Collectors;
  */
 public class Game implements Exportable {
     private Board board;
-//    private DisjointSet<Point> uf = new DisjointSet<Point>();
     private final PatternChecker patternChecker;
     private final Connectivity connectivity;
-    private Deque<Move> history = new ArrayDeque<Move>();
+//    private Deque<Move> history = new ArrayDeque<Move>();
+    private History history;
     private Stone currentPlayer = Stone.BLACK; // BLACK starts by default
-
-    // Virtual border nodes for Union-Find
-//    private static final Point WHITE_WEST  = new Point(-1, -1);
-//    private static final Point WHITE_EAST  = new Point(-2, -2);
-//    private static final Point BLACK_NORTH = new Point(-3, -3);
-//    private static final Point BLACK_SOUTH = new Point(-4, -4);
-
-    // All 8 neighbor directions
-//    private static final List<int[]> DIRECTIONS = Arrays.asList(
-//            new int[]{-1, -1}, new int[]{-1,  0}, new int[]{-1,  1},
-//            new int[]{ 0, -1},                   new int[]{ 0,  1},
-//            new int[]{ 1, -1}, new int[]{ 1,  0}, new int[]{ 1,  1}
-//    );
 
 
     /**
@@ -40,6 +27,7 @@ public class Game implements Exportable {
         this.board = board;
         this.connectivity = new Connectivity(board);
         this.patternChecker = new PatternChecker(List.of(new DiagonalXRule()));
+        this.history = new History();
     }
 
     public Game(BoardSize boardSize) {
@@ -52,23 +40,20 @@ public class Game implements Exportable {
         return patternChecker.isAllowed(board, new Move(p, s));
     }
 
-    public boolean place(Point p, Stone s) {
-        if (!canPlace(p, s)) return false;
+    private void place(Point p, Stone s) {
         connectivity.checkpoint();            // snapshot UF state for this move
         board.placeStone(p, s);
         connectivity.onPlace(p, s);           // do unions
-        history.push(new Move(p, s));
-        return true;
     }
 
 
-    public boolean undoLastMove() {
-        if (history.isEmpty()) return false;
-        Move last = history.pop();
-        board.clearCell(last.getPoint());
-        connectivity.rollback();
-        currentPlayer = last.getStone();
-        return true;
+    public void undoLastMove() {
+        Move lastMove = history.undo();
+        if (lastMove != null) {
+            board.clearCell(lastMove.getPoint());
+            connectivity.rollback();
+            currentPlayer = lastMove.getStone();
+        }
     }
 
     public Stone getCurrentPlayer() {
@@ -88,8 +73,7 @@ public class Game implements Exportable {
         }
 
         place(move.getPoint(), move.getStone());
-
-        history.add(move); // Track the move for potential undo
+        history.commit(move);
 
         currentPlayer = currentPlayer.opposite();
     }
@@ -110,10 +94,7 @@ public class Game implements Exportable {
         StringBuilder builder = new StringBuilder();
         builder.append("Game{")
                 .append("currentPlayer=").append(currentPlayer)
-                .append(", history=").append(history.stream()
-                .map(Move::encode)
-                .collect(Collectors.joining(", ")))
-                .append('}');
+                .append(", history=").append(history.encode());
         return builder.toString();
     }
 }
