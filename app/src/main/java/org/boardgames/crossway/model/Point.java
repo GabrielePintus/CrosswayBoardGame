@@ -7,7 +7,7 @@ package org.boardgames.crossway.model;
  * - x is the column (horizontal)
  * - y is the row (vertical)
  */
-public record Point(int x, int y) {
+public record Point(int x, int y) implements Exportable {
 
     /**
      * Checks if another point is a neighbour of this point.
@@ -22,4 +22,22 @@ public record Point(int x, int y) {
         return (Math.abs(this.x - other.x) <= 1 && Math.abs(this.y - other.y) <= 1);
     }
 
+
+    public String encode() {
+        return "(x=" + x + ",y=" + y + ")".strip();
+    }
+
+    public static Point fromString(String pointString) {
+        // Remove the surrounding parentheses
+        pointString = pointString.replace("(", "").replace(")", "");
+        // Split on equal sign
+        String[] parts = pointString.split(",");
+        String x_string = parts[0].substring(2);
+        String y_string = parts[1].substring(2);
+        // Parse the coordinates
+        int x = Integer.parseInt(x_string);
+        int y = Integer.parseInt(y_string);
+        // Return a new Point instance
+        return new Point(x, y);
+    }
 }

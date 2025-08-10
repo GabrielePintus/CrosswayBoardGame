@@ -1,5 +1,6 @@
 package org.boardgames.crossway.model;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -7,7 +8,7 @@ import java.util.stream.Collectors;
  * Main game logic for Crossway. Uses a Union-Find structure to
  * track connectivity for efficient win detection.
  */
-public class Game {
+public class Game implements Exportable {
     private Board board;
 //    private DisjointSet<Point> uf = new DisjointSet<Point>();
     private final PatternChecker patternChecker;
@@ -105,5 +106,14 @@ public class Game {
     }
 
 
-
+    public String encode() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Game{")
+                .append("currentPlayer=").append(currentPlayer)
+                .append(", history=").append(history.stream()
+                .map(Move::encode)
+                .collect(Collectors.joining(", ")))
+                .append('}');
+        return builder.toString();
+    }
 }
