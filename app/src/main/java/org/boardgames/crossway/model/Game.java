@@ -1,8 +1,6 @@
 package org.boardgames.crossway.model;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -12,7 +10,8 @@ import java.util.stream.Collectors;
 public class Game {
     private Board board;
     private DisjointSet<Point> uf = new DisjointSet<Point>();
-    private ArrayList<Point> history = new ArrayList<Point>();
+//    private ArrayList<Point> history = new ArrayList<Point>();
+    private Deque<Move> history = new ArrayDeque<Move>();
 
     // Virtual border nodes for Union-Find
     private static final Point WHITE_WEST  = new Point(-1, -1);
@@ -64,8 +63,9 @@ public class Game {
         }
 
         // Remove the last move from history and board
-        Point last = history.remove(history.size() - 1);
-        board.clearCell(last);
+//        Point last = history.remove(history.size() - 1);
+        Move lastMove = history.removeLast();
+        board.clearCell(lastMove.getPoint());
 
         // Rebuild the Union-Find structure from scratch
         uf = new DisjointSet<>();
@@ -75,8 +75,9 @@ public class Game {
         uf.makeSet(BLACK_SOUTH);
 
         // Replay all remaining moves in order
-        for (Point p : history) {
-            Stone s = board.getStone(p);
+        for (Move m : history) {
+            Stone s = board.getStone(m.getPoint());
+            Point p = m.getPoint();
             uf.makeSet(p);
             unionWithNeighbors(p, s);
             unionWithBorders(p, s);
@@ -111,7 +112,8 @@ public class Game {
         unionWithNeighbors(point, stone);
         unionWithBorders(point, stone);
 
-        history.add(point); // Track the move for potential undo
+//        history.add(point); // Track the move for potential undo
+        history.add(new Move(point, stone));
     }
 
     /**
