@@ -23,19 +23,24 @@ public class BoardTest {
     @DisplayName("Empty board returns null for any coordinate")
     void testGetStoneEmpty() {
         Point p = new Point(2, 3);
-        assertNull(board.getStone(p), "New board should have no stones placed");
+        assertNull(board.stoneAt(p), "New board should have no stones placed");
     }
 
     @Test
-    @DisplayName("Placing and retrieving stones")
-    void testPlaceAndGetStone() {
+    @DisplayName("Placing and retrieving stones (Optional API)")
+    void testPlaceAndStoneAt() {
         Point p = new Point(1, 1);
+
         board.placeStone(p, Stone.BLACK);
-        assertEquals(Stone.BLACK, board.getStone(p), "Stone placed should be retrievable");
+        var r1 = board.stoneAt(p);
+        assertTrue(r1.isPresent(), "Stone should be present after placement");
+        assertEquals(Stone.BLACK, r1.get(), "Stone placed should be retrievable");
 
         // Overwrite existing stone
         board.placeStone(p, Stone.WHITE);
-        assertEquals(Stone.WHITE, board.getStone(p), "Placing a new stone should overwrite previous one");
+        var r2 = board.stoneAt(p);
+        assertTrue(r2.isPresent(), "Stone should still be present after overwrite");
+        assertEquals(Stone.WHITE, r2.get(), "Placing a new stone should overwrite previous one");
     }
 
     @Test

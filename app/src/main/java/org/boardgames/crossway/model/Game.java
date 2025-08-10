@@ -74,11 +74,16 @@ public class Game {
 
         // Replay all remaining moves in order
         for (Move m : history) {
-            Stone s = board.getStone(m.getPoint());
-            Point p = m.getPoint();
-            uf.makeSet(p);
-            unionWithNeighbors(p, s);
-            unionWithBorders(p, s);
+            Optional<Stone> s = board.stoneAt(m.getPoint());
+            s.ifPresentOrElse(
+                stone -> {
+                    board.placeStone(m.getPoint(), stone); // Re-place the stone
+                    uf.makeSet(m.getPoint()); // Register the point in Union-Find
+                    unionWithNeighbors(m.getPoint(), stone);
+                    unionWithBorders(m.getPoint(), stone);
+                },
+                () -> board.clearCell(m.getPoint()) // Clear if no stone was present
+            );
         }
     }
 
@@ -143,9 +148,10 @@ public class Game {
     private void unionWithNeighbors(Point point, Stone stone) {
         for (int[] dir : DIRECTIONS) {
             Point neighbor = new Point(point.x() + dir[0], point.y() + dir[1]);
-            if (board.isOnBoard(neighbor) && stone.equals(board.getStone(neighbor))) {
-                uf.makeSet(neighbor);
-                uf.union(point, neighbor);
+            Optional<Stone> s = board.stoneAt(point);
+            if (board.isOnBoard(neighbor) && s.isPresent() && stone.equals(s.get())) {
+                uf.makeSet(neighbor); // Ensure the neighbor is registered in Union-Find
+                uf.union(point, neighbor); // Union the current point with the neighbor
             }
         }
     }
@@ -198,23 +204,43 @@ public class Game {
      * Determines if placing 'stone' at 'point' completes the forbidden pattern
      * within the 2x2 block whose top-left corner is 'topLeft'.
      */
-    private boolean isForbiddenBlock(Point topLeft, Point point, Stone stone) {
-        Stone other = stone.opposite();
-        Point p00 = topLeft;
-        Point p01 = new Point(topLeft.x(), topLeft.y() + 1);
-        Point p10 = new Point(topLeft.x() + 1, topLeft.y());
-        Point p11 = new Point(topLeft.x() + 1, topLeft.y() + 1);
-        Stone s00 = p00.equals(point) ? stone : board.getStone(p00);
-        Stone s01 = p01.equals(point) ? stone : board.getStone(p01);
-        Stone s10 = p10.equals(point) ? stone : board.getStone(p10);
-        Stone s11 = p11.equals(point) ? stone : board.getStone(p11);
+    private boolean isForbiddenBlock(Point topLeft, Point placed, Stone stone) {
+        final Stone other = stone.opposite();
 
-        if (s00 == null || s01 == null || s10 == null || s11 == null) {
+        // 2×2 block coordinates
+        final int x = topLeft.x();
+        final int y = topLeft.y();
+        final Point p00 = topLeft;
+        final Point p01 = new Point(x,     y + 1);
+        final Point p10 = new Point(x + 1, y);
+        final Point p11 = new Point(x + 1, y + 1);
+
+        // Early-out: if the 2×2 spills outside the board, it can't form the pattern
+        if (!board.isOnBoard(p00) || !board.isOnBoard(p01) || !board.isOnBoard(p10) || !board.isOnBoard(p11)) {
             return false;
         }
-        // Diagonal patterns
-        return (s00 == stone && s11 == stone && s01 == other && s10 == other)
-                || (s01 == stone && s10 == stone && s00 == other && s11 == other);
+
+        // Lookup that treats (placed) as if the move were already on the board
+        java.util.function.Function<Point, java.util.Optional<Stone>> atWithPlaced =
+                p -> p.equals(placed) ? java.util.Optional.of(stone) : board.stoneAt(p);
+
+        var s00 = atWithPlaced.apply(p00);
+        var s01 = atWithPlaced.apply(p01);
+        var s10 = atWithPlaced.apply(p10);
+        var s11 = atWithPlaced.apply(p11);
+
+        // Pattern only applies when all four cells are occupied
+        if (s00.isEmpty() || s01.isEmpty() || s10.isEmpty() || s11.isEmpty()) return false;
+
+        var v00 = s00.get();
+        var v01 = s01.get();
+        var v10 = s10.get();
+        var v11 = s11.get();
+
+        // Diagonal "X" patterns
+        return (v00 == stone && v11 == stone && v01 == other && v10 == other)
+                || (v01 == stone && v10 == stone && v00 == other && v11 == other);
     }
+
 
 }

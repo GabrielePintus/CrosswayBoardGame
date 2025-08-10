@@ -5,6 +5,7 @@ import org.boardgames.crossway.model.Point;
 import org.boardgames.crossway.model.Stone;
 import javax.swing.*;
 import java.awt.*;
+import java.util.Optional;
 
 /**
  * View component: renders the board grid and stones, scaling to fit the window
@@ -70,15 +71,17 @@ public class BoardView extends JPanel {
         for (int row = 0; row < N; row++) {
             for (int col = 0; col < N; col++) {
                 Point p = new Point(col, row);
-                Stone s = board.getStone(p);
-                if (s != null) {
-                    int x = xOffset + col * cellSize + margin;
-                    int y = yOffset + row * cellSize + margin;
-                    g2.setColor(s == Stone.BLACK ? Color.BLACK : Color.WHITE);
+                Optional<Stone> s = board.stoneAt(p);
+                final int mrow = row;
+                final int mcol = col;
+                s.ifPresent((stone) -> {
+                    int x = xOffset + mcol * cellSize + margin;
+                    int y = yOffset + mrow * cellSize + margin;
+                    g2.setColor(stone == Stone.BLACK ? Color.BLACK : Color.WHITE);
                     g2.fillOval(x, y, diameter, diameter);
                     g2.setColor(Color.BLACK);
                     g2.drawOval(x, y, diameter, diameter);
-                }
+                });
             }
         }
     }
