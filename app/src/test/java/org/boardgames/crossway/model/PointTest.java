@@ -38,4 +38,19 @@ public class PointTest {
         assertTrue(point.isNeighbourOf(ww), "Point should be a neighbour of West point");
         assertTrue(point.isNeighbourOf(nw), "Point should be a neighbour of North-West point");
     }
+
+    @Test
+    void roundTripSimple() {
+        Point p = new Point(3, 7);
+        String enc = p.encode();
+
+        assertEquals("(x=" + 3 + ",y=" + 7 + ")", enc);
+        assertEquals(p, Point.fromString(enc));
+    }
+
+    @Test
+    void roundTripWithNegatives() {
+        Point p = new Point(-2, 0);
+        assertEquals(p, Point.fromString(p.encode()));
+    }
 }

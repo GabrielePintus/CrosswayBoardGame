@@ -71,6 +71,11 @@ public class CrosswayController {
     private JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
 
+        // Left-aligned "File" menu
+        JMenu fileMenu = new JMenu("File");
+        JMenuItem exportGame = new JMenuItem("Export game");
+        exportGame.addActionListener(e -> promptExportGame());
+
         // Left-aligned "Game" menu
         JMenu gameMenu = new JMenu("Game");
         JMenuItem newGame = new JMenuItem("New Game");
@@ -79,10 +84,11 @@ public class CrosswayController {
         restart.addActionListener(e -> restartGame());
         JMenuItem exit = new JMenuItem("Exit");
         exit.addActionListener(e -> System.exit(0));
-
+        fileMenu.add(exportGame);
         gameMenu.add(newGame);
         gameMenu.add(restart);
         gameMenu.add(exit);
+        menuBar.add(fileMenu);
         menuBar.add(gameMenu);
 
         // Push everything after this to the right
@@ -187,6 +193,29 @@ public class CrosswayController {
             case 3 -> boardSize = BoardSize.LARGE.size();
         }
         restartGame();
+    }
+
+    private void promptExportGame() {
+        // open a file chooser dialog to select export location
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Export Game");
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        int userSelection = fileChooser.showSaveDialog(frame);
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            java.io.File fileToSave = fileChooser.getSelectedFile();
+            try {
+                String exportedGame = game.encode();
+                java.nio.file.Files.writeString(fileToSave.toPath(), exportedGame);
+                JOptionPane.showMessageDialog(frame, "Game exported successfully to " + fileToSave.getAbsolutePath(),
+                        "Export Successful", JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(frame, "Failed to export game: " + ex.getMessage(),
+                        "Export Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } else {
+            // User cancelled the export
+            JOptionPane.showMessageDialog(frame, "Export cancelled.", "Export Cancelled", JOptionPane.INFORMATION_MESSAGE);
+        }
     }
 
     /**

@@ -1,6 +1,6 @@
 package org.boardgames.crossway.model;
 
-public class Move {
+public class Move implements Exportable{
 
     private final Point point;
     private final Stone stone;
@@ -32,4 +32,10 @@ public class Move {
         return stone;
     }
 
+    public String encode() {
+        return "Move{" +
+                "point=" + point +
+                ", stone=" + stone +
+                '}';
+    }
 }
