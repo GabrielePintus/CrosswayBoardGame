@@ -3,86 +3,202 @@ package org.boardgames.crossway.ui;
 import org.boardgames.crossway.model.Board;
 import org.boardgames.crossway.model.Point;
 import org.boardgames.crossway.model.Stone;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.Optional;
 
 /**
- * View component: renders the board grid and stones, scaling to fit the window
+ * View component that renders the board grid and stones, scaling to fit the window
  * while maintaining a square aspect ratio during resize.
+ *
+ * This component automatically centers the board within its bounds and ensures
+ * the board remains square regardless of the parent container's dimensions.
  */
 public class BoardView extends JPanel {
+
+    /** The board model to render */
     private final Board board;
 
+    /** Initial cell size multiplier for preferred size calculation */
+    private static final int INITIAL_CELL_SIZE = 40;
+
+    /** Margin factor for stone rendering (1/10 of cell size) */
+    private static final int MARGIN_DIVISOR = 10;
+
+    /** Minimum cell size to prevent rendering issues */
+    private static final int MIN_CELL_SIZE = 1;
+
+    /**
+     * Creates a new BoardView for the specified board.
+     *
+     * @param board the board model to render
+     */
     public BoardView(Board board) {
         this.board = board;
-        // Set an initial preferred size proportional to board dimensions
-        int size = board.getSize().size();
-        setPreferredSize(new Dimension(size * 40, size * 40));
+        initializePreferredSize();
     }
 
     /**
-     * Ensures the panel remains square: clamps its bounds to a square region
-     * whenever its size is set by the parent.
+     * Initializes the preferred size based on board dimensions.
+     */
+    private void initializePreferredSize() {
+        int boardSize = board.getSize().size();
+        int preferredDimension = boardSize * INITIAL_CELL_SIZE;
+        setPreferredSize(new Dimension(preferredDimension, preferredDimension));
+    }
+
+    /**
+     * Ensures the panel remains square by clamping its bounds to a square region
+     * whenever its size is set by the parent container.
+     *
+     * @param x the x coordinate
+     * @param y the y coordinate
+     * @param width the desired width
+     * @param height the desired height
      */
     @Override
     public void setBounds(int x, int y, int width, int height) {
-        int side = Math.min(width, height);
-        super.setBounds(x, y, side, side);
+        int squareSide = Math.min(width, height);
+        super.setBounds(x, y, squareSide, squareSide);
     }
 
     /**
      * Computes the current cell size based on the square panel dimensions.
-     * @return size in pixels of one board cell (square)
+     *
+     * @return size in pixels of one board cell (guaranteed to be at least 1)
      */
     public int getCellSize() {
-        int N = board.getSize().size();
-        int side = Math.min(getWidth(), getHeight());
-        if (N <= 0) return 0;
-        return Math.max(1, side / N);
+        int boardSize = board.getSize().size();
+
+        if (boardSize <= 0) {
+            return 0;
+        }
+
+        int panelSide = Math.min(getWidth(), getHeight());
+        return Math.max(MIN_CELL_SIZE, panelSide / boardSize);
     }
 
+    /**
+     * Renders the board component including grid lines and stones.
+     *
+     * @param g the graphics context to render into
+     */
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        Graphics2D g2 = (Graphics2D) g;
 
-        int N = board.getSize().size();
-        int cellSize = getCellSize();
-        int boardSide = cellSize * N;
+        Graphics2D g2d = (Graphics2D) g.create();
+        try {
+            // Enable anti-aliasing for smoother rendering
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Center the board in the square panel
-        int xOffset = (getWidth() - boardSide) / 2;
-        int yOffset = (getHeight() - boardSide) / 2;
-
-        // Draw grid lines
-        g2.setColor(Color.LIGHT_GRAY);
-        for (int i = 0; i <= N; i++) {
-            int pos = i * cellSize;
-            // vertical line
-            g2.drawLine(xOffset + pos, yOffset, xOffset + pos, yOffset + boardSide);
-            // horizontal line
-            g2.drawLine(xOffset, yOffset + pos, xOffset + boardSide, yOffset + pos);
+            drawBoard(g2d);
+        } finally {
+            g2d.dispose();
         }
+    }
 
-        // Draw stones
-        int margin = cellSize / 10;
-        int diameter = cellSize - 2 * margin;
-        for (int row = 0; row < N; row++) {
-            for (int col = 0; col < N; col++) {
-                Point p = new Point(col, row);
-                Optional<Stone> s = board.stoneAt(p);
-                final int mrow = row;
-                final int mcol = col;
-                s.ifPresent((stone) -> {
-                    int x = xOffset + mcol * cellSize + margin;
-                    int y = yOffset + mrow * cellSize + margin;
-                    g2.setColor(stone == Stone.BLACK ? Color.BLACK : Color.WHITE);
-                    g2.fillOval(x, y, diameter, diameter);
-                    g2.setColor(Color.BLACK);
-                    g2.drawOval(x, y, diameter, diameter);
-                });
+    /**
+     * Draws the complete board including grid and stones.
+     *
+     * @param g2d the graphics context
+     */
+    private void drawBoard(Graphics2D g2d) {
+        int boardSize = board.getSize().size();
+        int cellSize = getCellSize();
+        int boardPixelSize = cellSize * boardSize;
+
+        // Calculate offsets to center the board
+        int xOffset = (getWidth() - boardPixelSize) / 2;
+        int yOffset = (getHeight() - boardPixelSize) / 2;
+
+        drawGrid(g2d, boardSize, cellSize, xOffset, yOffset, boardPixelSize);
+        drawStones(g2d, boardSize, cellSize, xOffset, yOffset);
+    }
+
+    /**
+     * Draws the grid lines for the board.
+     *
+     * @param g2d the graphics context
+     * @param boardSize the size of the board (N x N)
+     * @param cellSize the size of each cell in pixels
+     * @param xOffset horizontal offset for centering
+     * @param yOffset vertical offset for centering
+     * @param boardPixelSize total board size in pixels
+     */
+    private void drawGrid(Graphics2D g2d, int boardSize, int cellSize,
+                          int xOffset, int yOffset, int boardPixelSize) {
+        g2d.setColor(Color.LIGHT_GRAY);
+
+        // Draw vertical and horizontal grid lines
+        for (int i = 0; i <= boardSize; i++) {
+            int linePosition = i * cellSize;
+
+            // Vertical line
+            g2d.drawLine(xOffset + linePosition, yOffset,
+                    xOffset + linePosition, yOffset + boardPixelSize);
+
+            // Horizontal line
+            g2d.drawLine(xOffset, yOffset + linePosition,
+                    xOffset + boardPixelSize, yOffset + linePosition);
+        }
+    }
+
+    /**
+     * Draws all stones on the board.
+     *
+     * @param g2d the graphics context
+     * @param boardSize the size of the board (N x N)
+     * @param cellSize the size of each cell in pixels
+     * @param xOffset horizontal offset for centering
+     * @param yOffset vertical offset for centering
+     */
+    private void drawStones(Graphics2D g2d, int boardSize, int cellSize,
+                            int xOffset, int yOffset) {
+        int stoneMargin = cellSize / MARGIN_DIVISOR;
+        int stoneDiameter = cellSize - (2 * stoneMargin);
+
+        for (int row = 0; row < boardSize; row++) {
+            for (int col = 0; col < boardSize; col++) {
+                Point position = new Point(col, row);
+                Optional<Stone> stone = board.stoneAt(position);
+
+                if (stone.isPresent()) {
+                    drawStone(g2d, stone.get(), col, row, cellSize,
+                            xOffset, yOffset, stoneMargin, stoneDiameter);
+                }
             }
         }
+    }
+
+    /**
+     * Draws a single stone at the specified position.
+     *
+     * @param g2d the graphics context
+     * @param stone the stone to draw
+     * @param col the column position
+     * @param row the row position
+     * @param cellSize the size of each cell
+     * @param xOffset horizontal offset for centering
+     * @param yOffset vertical offset for centering
+     * @param margin the margin around the stone
+     * @param diameter the diameter of the stone
+     */
+    private void drawStone(Graphics2D g2d, Stone stone, int col, int row,
+                           int cellSize, int xOffset, int yOffset,
+                           int margin, int diameter) {
+        int x = xOffset + col * cellSize + margin;
+        int y = yOffset + row * cellSize + margin;
+
+        // Fill the stone with appropriate color
+        Color stoneColor = (stone == Stone.BLACK) ? Color.BLACK : Color.WHITE;
+        g2d.setColor(stoneColor);
+        g2d.fillOval(x, y, diameter, diameter);
+
+        // Draw the stone border
+        g2d.setColor(Color.BLACK);
+        g2d.drawOval(x, y, diameter, diameter);
     }
 }
