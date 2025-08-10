@@ -22,9 +22,10 @@ public class BoardTest {
     @Test
     @DisplayName("Empty board returns null for any coordinate")
     void testGetStoneEmpty() {
-        Point p = new Point(2, 3);
-        assertNull(board.stoneAt(p), "New board should have no stones placed");
+        Point p = new Point(6, 1);
+        assertFalse(board.stoneAt(p).isPresent(), "New board should have no stones placed");
     }
+
 
     @Test
     @DisplayName("Placing and retrieving stones (Optional API)")
