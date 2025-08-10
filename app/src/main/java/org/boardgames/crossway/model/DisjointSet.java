@@ -49,4 +49,12 @@ public class DisjointSet<T> {
         if (!parent.containsKey(a) || !parent.containsKey(b)) return false;
         return find(a).equals(find(b));
     }
+
+
+    /**
+     * Clears the structure, removing all items.
+     */
+    public void clear() {
+        parent.clear();
+    }
 }
