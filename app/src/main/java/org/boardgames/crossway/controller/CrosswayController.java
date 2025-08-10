@@ -1,13 +1,18 @@
 package org.boardgames.crossway.controller;
 
 import org.boardgames.crossway.model.*;
+import org.boardgames.crossway.model.Point;
 import org.boardgames.crossway.ui.BoardView;
+import org.boardgames.crossway.ui.HistoryView;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Controller for the Crossway board game application.
@@ -75,6 +80,9 @@ public class CrosswayController {
 
     /** The view component responsible for rendering the board */
     private BoardView view;
+    /** The history view for displaying game history */
+    private HistoryView historyView;
+
 
     /** The main application window */
     private JFrame frame;
@@ -138,6 +146,7 @@ public class CrosswayController {
     private void initializeComponents() {
         game = new Game(new BoardSize(boardSize));
         view = new BoardView(game.getBoard());
+        historyView = new HistoryView(); // Add this line
     }
 
     /**
@@ -163,7 +172,7 @@ public class CrosswayController {
      */
     private void configureWindowProperties() {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setResizable(false);
+        frame.setResizable(true);
         frame.setJMenuBar(createApplicationMenuBar());
     }
 
@@ -171,7 +180,9 @@ public class CrosswayController {
      * Adds the board view and other components to the window.
      */
     private void addComponentsToWindow() {
-        frame.add(view);
+        frame.setLayout(new BorderLayout()); // Add this line
+        frame.add(view, BorderLayout.CENTER); // Modify this line
+        frame.add(historyView, BorderLayout.EAST); // Add this line
     }
 
     /**
@@ -208,6 +219,7 @@ public class CrosswayController {
      */
     private void addLeftAlignedMenus(JMenuBar menuBar) {
         menuBar.add(createFileMenu());
+        menuBar.add(createViewMenu());
         menuBar.add(createGameMenu());
     }
 
@@ -243,6 +255,20 @@ public class CrosswayController {
         fileMenu.add(exportItem);
 
         return fileMenu;
+    }
+
+    /**
+     * Creates the View menu with display options.
+     *
+     * @return the configured View menu
+     */
+    private JMenu createViewMenu() {
+        JMenu viewMenu = new JMenu("View");
+
+        JMenuItem showHistoryItem = createMenuItem("Show History", this::handleShowHistoryRequest);
+        viewMenu.add(showHistoryItem);
+
+        return viewMenu;
     }
 
     /**
@@ -321,6 +347,16 @@ public class CrosswayController {
      * Processes mouse releases as move attempts.
      */
     private class BoardMouseHandler extends MouseAdapter {
+        /**
+
+         * Handles mouse release events on the board component.
+
+         *
+
+         * @param e the mouse event
+
+         */
+
         @Override
         public void mouseReleased(MouseEvent e) {
             processMouseClick(e);
@@ -369,6 +405,7 @@ public class CrosswayController {
         try {
             Move move = new Move(position, player);
             game.makeMove(move);
+            updateHistoryDisplay(); // Add this line
             return true;
         } catch (IllegalArgumentException ex) {
             displayInvalidMoveWarning(ex.getMessage());
@@ -441,6 +478,24 @@ public class CrosswayController {
     }
 
     // ==================== Menu Action Handlers ====================
+
+    /**
+     * Handles requests to show/hide the game history.
+     */
+    private void handleShowHistoryRequest() {
+        // Placeholder for future implementation
+        historyView.toggleVisibility();
+
+        // Expand window size
+        int widthDiff = historyView.getExpandedWidth();
+        int newSize = historyView.isHistoryVisible() ? frame.getWidth() + widthDiff : frame.getWidth() - widthDiff;
+        frame.setSize(newSize, frame.getHeight());
+
+        // Update menu text based on visibility state
+        JMenu viewMenu = (JMenu) frame.getJMenuBar().getMenu(1); // View menu is 3rd (index 2)
+        JMenuItem historyItem = viewMenu.getItem(0);
+        historyItem.setText(historyView.isHistoryVisible() ? "Hide History" : "Show History");
+    }
 
     /**
      * Handles requests to start a new game with potentially different board size.
@@ -520,8 +575,18 @@ public class CrosswayController {
      */
     private void updateWindowContents() {
         frame.getContentPane().removeAll();
-        frame.add(view);
-        frame.pack(); // Resize window to accommodate new board size
+        frame.setLayout(new BorderLayout()); // Add this line
+        frame.add(view, BorderLayout.CENTER); // Modify this line
+        frame.add(historyView, BorderLayout.EAST); // Add this line
+        frame.pack();
+    }
+
+    /**
+     * Updates the history display with the current game move history.
+     * This method should be called whenever a move is made or undone.
+     */
+    private void updateHistoryDisplay() {
+        historyView.updateHistory(game.getMoveHistory());
     }
 
     /**
@@ -549,6 +614,7 @@ public class CrosswayController {
         try {
             game.undoLastMove();
             refreshBoardDisplay();
+            updateHistoryDisplay(); // Add this line
         } catch (IllegalStateException ex) {
             displayNoUndoAvailableDialog();
         }
@@ -562,6 +628,7 @@ public class CrosswayController {
         try {
             game.redoLastMove();
             refreshBoardDisplay();
+            updateHistoryDisplay(); // Add this line
         } catch (IllegalStateException ex) {
             displayNoRedoAvailableDialog();
         }

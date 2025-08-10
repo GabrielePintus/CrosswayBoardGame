@@ -114,6 +114,15 @@ public final class History implements Exportable {
         return nextMove;
     }
 
+    /**
+     * Gets a copy of the past moves for display purposes.
+     *
+     * @return list of past moves in chronological order
+     */
+    public List<Move> getPastMoves() {
+        return new ArrayList<>(pastMoves);
+    }
+
     public String encode() {
         String movesString = pastMoves.stream()
                 .map(Move::encode)

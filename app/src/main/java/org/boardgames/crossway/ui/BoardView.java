@@ -89,6 +89,7 @@ public class BoardView extends JPanel {
         super.paintComponent(g);
 
         Graphics2D g2d = (Graphics2D) g.create();
+
         try {
             // Enable anti-aliasing for smoother rendering
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
