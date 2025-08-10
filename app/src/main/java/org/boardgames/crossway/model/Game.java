@@ -9,21 +9,25 @@ import java.util.stream.Collectors;
  */
 public class Game {
     private Board board;
-    private DisjointSet<Point> uf = new DisjointSet<Point>();
+//    private DisjointSet<Point> uf = new DisjointSet<Point>();
+    private final PatternChecker patternChecker;
+    private final Connectivity connectivity;
     private Deque<Move> history = new ArrayDeque<Move>();
+    private Stone currentPlayer = Stone.BLACK; // BLACK starts by default
 
     // Virtual border nodes for Union-Find
-    private static final Point WHITE_WEST  = new Point(-1, -1);
-    private static final Point WHITE_EAST  = new Point(-2, -2);
-    private static final Point BLACK_NORTH = new Point(-3, -3);
-    private static final Point BLACK_SOUTH = new Point(-4, -4);
+//    private static final Point WHITE_WEST  = new Point(-1, -1);
+//    private static final Point WHITE_EAST  = new Point(-2, -2);
+//    private static final Point BLACK_NORTH = new Point(-3, -3);
+//    private static final Point BLACK_SOUTH = new Point(-4, -4);
 
     // All 8 neighbor directions
-    private static final List<int[]> DIRECTIONS = Arrays.asList(
-            new int[]{-1, -1}, new int[]{-1,  0}, new int[]{-1,  1},
-            new int[]{ 0, -1},                   new int[]{ 0,  1},
-            new int[]{ 1, -1}, new int[]{ 1,  0}, new int[]{ 1,  1}
-    );
+//    private static final List<int[]> DIRECTIONS = Arrays.asList(
+//            new int[]{-1, -1}, new int[]{-1,  0}, new int[]{-1,  1},
+//            new int[]{ 0, -1},                   new int[]{ 0,  1},
+//            new int[]{ 1, -1}, new int[]{ 1,  0}, new int[]{ 1,  1}
+//    );
+
 
     /**
      * Constructs a new game on the given board.
@@ -33,53 +37,41 @@ public class Game {
      */
     public Game(Board board) {
         this.board = board;
-        // Register virtual border nodes
-        uf.makeSet(WHITE_WEST);
-        uf.makeSet(WHITE_EAST);
-        uf.makeSet(BLACK_NORTH);
-        uf.makeSet(BLACK_SOUTH);
+        this.connectivity = new Connectivity(board);
+        this.patternChecker = new PatternChecker(List.of(new DiagonalXRule()));
     }
 
     public Game(BoardSize boardSize) {
         this(new Board(boardSize));
     }
 
-
-    public void reset() {
-        board.clear();
-        this.uf = new DisjointSet<Point>(); // Reset Union-Find structure
-        // Re-register virtual border nodes
-        uf.makeSet(WHITE_WEST);
-        uf.makeSet(WHITE_EAST);
-        uf.makeSet(BLACK_NORTH);
-        uf.makeSet(BLACK_SOUTH);
-
+    public boolean canPlace(Point p, Stone s) {
+        if (!board.isOnBoard(p)) return false;
+        if (board.stoneAt(p).isPresent()) return false;
+        return patternChecker.isAllowed(board, new Move(p, s));
     }
 
-    public void undoLastMove() {
-        if (history.isEmpty()) {
-            throw new IllegalStateException("No moves to undo.");
-        }
+    public boolean place(Point p, Stone s) {
+        if (!canPlace(p, s)) return false;
+        connectivity.checkpoint();            // snapshot UF state for this move
+        board.placeStone(p, s);
+        connectivity.onPlace(p, s);           // do unions
+        history.push(new Move(p, s));
+        return true;
+    }
 
-        // Remove the last move from history and board
-        Move lastMove = history.removeLast();
-        board.clearCell(lastMove.getPoint());
 
-        // Rebuild the Union-Find structure from scratch
-        uf = new DisjointSet<>();
-        uf.makeSet(WHITE_WEST);
-        uf.makeSet(WHITE_EAST);
-        uf.makeSet(BLACK_NORTH);
-        uf.makeSet(BLACK_SOUTH);
+    public boolean undoLastMove() {
+        if (history.isEmpty()) return false;
+        Move last = history.pop();
+        board.clearCell(last.getPoint());
+        connectivity.rollback();
+        currentPlayer = last.getStone();
+        return true;
+    }
 
-        // Replay all remaining moves in order
-        for (Move m : history) {
-            Stone s = board.getStone(m.getPoint());
-            Point p = m.getPoint();
-            uf.makeSet(p);
-            unionWithNeighbors(p, s);
-            unionWithBorders(p, s);
-        }
+    public Stone getCurrentPlayer() {
+        return currentPlayer;
     }
 
     /**
@@ -90,131 +82,28 @@ public class Game {
     }
 
     public void makeMove(Move move) {
-        if (!validateMove(move)) {
+        if (!canPlace(move.getPoint(), move.getStone())) {
             throw new IllegalArgumentException("Invalid point for placing stone: " + move.getPoint());
         }
 
-        board.placeStone(move.getPoint(), move.getStone());
-
-        // Register the point in Union-Find
-        uf.makeSet(move.getPoint());
-        unionWithNeighbors(move.getPoint(), move.getStone());
-        unionWithBorders(move.getPoint(), move.getStone());
+        place(move.getPoint(), move.getStone());
 
         history.add(move); // Track the move for potential undo
+
+        currentPlayer = currentPlayer.opposite();
     }
 
 
     /**
      * Checks if the given color has formed a connected path across.
      *
-     * @param stone the stone color to check
+     * @param s the stone color to check
      * @return true if that color has won
      */
-    public boolean hasWon(Stone stone) {
-        return (stone == Stone.WHITE)
-                ? uf.connected(WHITE_WEST, WHITE_EAST)
-                : uf.connected(BLACK_NORTH, BLACK_SOUTH);
+    public boolean hasWon(Stone s) {
+        return connectivity.hasWon(s);
     }
 
-    // ------ Helper Methods ------
 
-    /**
-     * Validates that the point can be placed on the board at point
-     */
-    private boolean validatePoint(Point point) {
-        boolean inBounds = board.isOnBoard(point);
-        boolean isEmpty = board.isEmpty(point);
-        return inBounds && isEmpty;
-    }
-
-    private boolean validateMove(Move move) {
-        // Check if the point is on the board and empty
-        boolean isPointValid = validatePoint(move.getPoint());
-        // Check for forbidden 2x2 patterns
-        boolean isPatternViolated = enforceNoForbiddenPattern(move);
-
-        return isPointValid && !isPatternViolated;
-    }
-
-    /**
-     * Unions the newly placed stone with all adjacent stones of the same color.
-     */
-    private void unionWithNeighbors(Point point, Stone stone) {
-        for (int[] dir : DIRECTIONS) {
-            Point neighbor = new Point(point.x() + dir[0], point.y() + dir[1]);
-            if (board.isOnBoard(neighbor) && stone.equals(board.getStone(neighbor))) {
-                uf.makeSet(neighbor);
-                uf.union(point, neighbor);
-            }
-        }
-    }
-
-    /**
-     * Unions the stone with the appropriate virtual border nodes.
-     */
-    private void unionWithBorders(Point point, Stone stone) {
-        int N = board.getSize().size();  // square board
-        if (stone == Stone.WHITE) {
-            if (point.x() == 0)     uf.union(point, WHITE_WEST);
-            if (point.x() == N - 1) uf.union(point, WHITE_EAST);
-        } else {
-            if (point.y() == 0)     uf.union(point, BLACK_NORTH);
-            if (point.y() == N - 1) uf.union(point, BLACK_SOUTH);
-        }
-    }
-
-    /**
-     * Enforces that no forbidden 2x2 pattern (as in Fig.2) is formed by this placement.
-     */
-    private boolean enforceNoForbiddenPattern(Move move) {
-        List<Point> blocks = getTopLeftCorners(move.getPoint());
-        for (Point topLeft : blocks) {
-            if (isForbiddenBlock(topLeft, move.getPoint(), move.getStone())) {
-                return true; // Pattern is violated
-            }
-        }
-        return false; // No forbidden pattern found
-    }
-
-    /**
-     * Returns all top-left corners of 2x2 blocks that include the point.
-     */
-    private List<Point> getTopLeftCorners(Point point) {
-        int x = point.x(), y = point.y();
-        return Arrays.stream(new int[][]{{-1,-1},{-1,0},{0,-1},{0,0}})
-                .map(offset -> new Point(x + offset[0], y + offset[1]))
-                .filter(p -> isWithinBlock(p))
-                .collect(Collectors.toList());
-    }
-    /**
-     * Checks if a 2x2 block with top-left corner p fits on the board.
-     */
-    private boolean isWithinBlock(Point p) {
-        int N = board.getSize().size();
-        return p.x() >= 0 && p.y() >= 0 && p.x() + 1 < N && p.y() + 1 < N;
-    }
-    /**
-     * Determines if placing 'stone' at 'point' completes the forbidden pattern
-     * within the 2x2 block whose top-left corner is 'topLeft'.
-     */
-    private boolean isForbiddenBlock(Point topLeft, Point point, Stone stone) {
-        Stone other = stone.opposite();
-        Point p00 = topLeft;
-        Point p01 = new Point(topLeft.x(), topLeft.y() + 1);
-        Point p10 = new Point(topLeft.x() + 1, topLeft.y());
-        Point p11 = new Point(topLeft.x() + 1, topLeft.y() + 1);
-        Stone s00 = p00.equals(point) ? stone : board.getStone(p00);
-        Stone s01 = p01.equals(point) ? stone : board.getStone(p01);
-        Stone s10 = p10.equals(point) ? stone : board.getStone(p10);
-        Stone s11 = p11.equals(point) ? stone : board.getStone(p11);
-
-        if (s00 == null || s01 == null || s10 == null || s11 == null) {
-            return false;
-        }
-        // Diagonal patterns
-        return (s00 == stone && s11 == stone && s01 == other && s10 == other)
-                || (s01 == stone && s10 == stone && s00 == other && s11 == other);
-    }
 
 }

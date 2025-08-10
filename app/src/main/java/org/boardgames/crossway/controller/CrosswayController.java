@@ -15,7 +15,7 @@ public class CrosswayController {
     private Game game;
     private BoardView view;
     private JFrame frame;
-    private Stone currentPlayer = Stone.BLACK;  // BLACK starts by default
+//    private Stone currentPlayer = Stone.BLACK;  // BLACK starts by default
     private int boardSize;
 
     /**
@@ -99,7 +99,7 @@ public class CrosswayController {
     private void undoMove() {
         try {
             game.undoLastMove();
-            currentPlayer = currentPlayer.opposite();
+//            currentPlayer = currentPlayer.opposite();
             view.repaint();
         } catch (IllegalStateException ex) {
             JOptionPane.showMessageDialog(
@@ -120,6 +120,7 @@ public class CrosswayController {
             @Override
             public void mouseReleased(MouseEvent e) {
                 Point p = toBoardPoint(e);
+                Stone currentPlayer = game.getCurrentPlayer();
                 try {
                     game.makeMove(new Move(p, currentPlayer));
                     view.repaint();
@@ -147,10 +148,9 @@ public class CrosswayController {
                     switch (choice) {
                         case 0 -> promptNewGame();  // New Game
                         case 1 -> restartGame();     // Restart
-                        case 2, -1 -> System.exit(0); // Exit or close dialog
+                        // Close dialog and do nothing
+                        case 2 -> System.exit(0); // Exit
                     }
-                } else {
-                    currentPlayer = currentPlayer.opposite();
                 }
             }
         });
@@ -204,6 +204,5 @@ public class CrosswayController {
         bindEvents();
         frame.revalidate();
         frame.repaint();
-        currentPlayer = Stone.BLACK;
     }
 }

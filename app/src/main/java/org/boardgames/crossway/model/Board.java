@@ -6,6 +6,7 @@ import org.boardgames.crossway.model.Stone;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Represents the Go board with a fixed size.
@@ -47,24 +48,15 @@ public class Board {
     }
 
     /**
-     * Retrieves the stone at a given point.
-     *
-     * @param point the point on the board
-     * @return the stone at that point, or null if empty
-     */
-    public Stone getStone(Point point) {
-        return grid.get(point);
-    }
-
-    /**
-     * Check wether a point is occupied by a stone.
+     * Retrieves the stone at a specified point on the board.
      *
      * @param point the point to check
-     * @return true if occupied, false otherwise
+     * @return an Optional containing the stone if present, or empty if no stone is found
      */
-    public boolean isOccupied(Point point) {
-        return grid.containsKey(point);
+    public Optional<Stone> stoneAt(Point point) {
+        return Optional.ofNullable(grid.get(point));
     }
+
     /**
      * Check whether a point is not occupied by a stone.
      *
