@@ -58,6 +58,12 @@ public final class Connectivity {
         }
     }
 
+    /**
+     * Checks if the specified player has achieved a winning connection.
+     *
+     * @param s the stone color (player) to check
+     * @return true if the player has connected their respective sides, false otherwise
+     */
     public boolean hasWon(Stone s) {
         if (s == Stone.WHITE) {
             return uf.connected(border.get(Border.WHITE_WEST), border.get(Border.WHITE_EAST));
@@ -66,4 +72,3 @@ public final class Connectivity {
         }
     }
 }
-

@@ -32,6 +32,11 @@ public class Move implements Exportable{
         return stone;
     }
 
+    /**
+     * Encodes this move into a string representation.
+     *
+     * @return a string representation of the move, including point and stone
+     */
     public String encode() {
         return "Move{" +
                 "point=" + point +

@@ -27,6 +27,9 @@ public final class DisjointSet<T> {
     private final Deque<Change<T>> changes = new ArrayDeque<>();
     private final Deque<Integer> checkpoints = new ArrayDeque<>();
 
+    /**
+     * Clears all elements and resets the disjoint set to an empty state.
+     */
     public void clear() {
         parent.clear();
         size.clear();
@@ -34,10 +37,17 @@ public final class DisjointSet<T> {
         checkpoints.clear();
     }
 
+    /**
+     * Saves the current state of the disjoint set to allow rollback.
+     */
     public void checkpoint() {
         checkpoints.push(changes.size());
     }
 
+    /**
+     * Restores the disjoint set to the last saved checkpoint.
+     * If no checkpoint exists, no action is taken.
+     */
     public void rollback() {
         if (checkpoints.isEmpty()) return;
         int target = checkpoints.pop();
@@ -56,8 +66,20 @@ public final class DisjointSet<T> {
         }
     }
 
+    /**
+     * Checks whether the disjoint set contains the specified element.
+     *
+     * @param x the element to check
+     * @return true if the element exists in the set, false otherwise
+     */
     public boolean contains(T x) { return parent.containsKey(x); }
 
+    /**
+     * Creates a new singleton set containing the specified element.
+     * If the element already exists, no action is taken.
+     *
+     * @param x the element to add
+     */
     public void makeSet(T x) {
         if (parent.containsKey(x)) return;
         parent.put(x, x);
@@ -65,6 +87,13 @@ public final class DisjointSet<T> {
         changes.push(new Change<>(x, null, null, null, true));
     }
 
+    /**
+     * Finds the root representative of the specified element.
+     * Does not apply path compression to maintain rollback capability.
+     *
+     * @param x the element to find the root for
+     * @return the root element
+     */
     private T findRoot(T x) {
         T p = parent.get(x);
         while (p != null && !p.equals(x)) {
@@ -74,6 +103,14 @@ public final class DisjointSet<T> {
         return x;
     }
 
+    /**
+     * Unites the sets containing the two specified elements.
+     * Uses union-by-size; does not use path compression.
+     *
+     * @param a the first element
+     * @param b the second element
+     * @return true if a union occurred, false if they were already connected
+     */
     public boolean union(T a, T b) {
         if (!parent.containsKey(a) || !parent.containsKey(b)) return false;
         T ra = findRoot(a), rb = findRoot(b);
@@ -90,6 +127,13 @@ public final class DisjointSet<T> {
         return true;
     }
 
+    /**
+     * Checks whether two elements belong to the same set.
+     *
+     * @param a the first element
+     * @param b the second element
+     * @return true if both elements share the same root, false otherwise
+     */
     public boolean connected(T a, T b) {
         if (!parent.containsKey(a) || !parent.containsKey(b)) return false;
         return findRoot(a).equals(findRoot(b));

@@ -7,6 +7,14 @@ import java.util.*;
 public final class DiagonalXRule implements PatternRule {
 
     @Override
+    /**
+     * Validates a move against the diagonal X rule.
+     * A violation occurs if a 2x2 block is formed with stones in a forbidden diagonal pattern.
+     *
+     * @param board the current game board
+     * @param move the move to validate
+     * @return an Optional containing a PatternViolation if the rule is broken, otherwise empty
+     */
     public Optional<PatternViolation> validate(Board board, Move move) {
         final Point placed = move.getPoint();
         final Stone stone  = move.getStone();

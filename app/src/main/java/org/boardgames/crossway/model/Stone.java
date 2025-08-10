@@ -17,6 +17,11 @@ public enum Stone implements Exportable {
         return this == BLACK ? WHITE : BLACK;
     }
 
+    /**
+     * Encodes this stone as its name representation.
+     *
+     * @return the string name of this stone (BLACK or WHITE)
+     */
     public String encode() {
         return this.name();
     }

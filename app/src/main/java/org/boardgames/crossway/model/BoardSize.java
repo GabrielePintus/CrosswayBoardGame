@@ -38,9 +38,14 @@ public record BoardSize(int size) {
      */
     public boolean isInBounds(Point point) {
         return point.x() >= 0 && point.x() < size &&
-               point.y() >= 0 && point.y() < size;
+                point.y() >= 0 && point.y() < size;
     }
 
+    /**
+     * Returns the board size as an integer value.
+     *
+     * @return the board dimension
+     */
     public int toInt() {
         return size;
     }
