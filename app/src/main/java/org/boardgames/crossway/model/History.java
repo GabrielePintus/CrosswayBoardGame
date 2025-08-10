@@ -123,6 +123,12 @@ public final class History implements Exportable {
         return new ArrayList<>(pastMoves);
     }
 
+    /**
+     * Encodes the entire move history into a string representation.
+     * Includes both past and future moves for complete state reconstruction.
+     *
+     * @return a string representation of the move history
+     */
     public String encode() {
         String movesString = pastMoves.stream()
                 .map(Move::encode)

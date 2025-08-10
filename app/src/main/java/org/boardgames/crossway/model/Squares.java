@@ -3,10 +3,22 @@ package org.boardgames.crossway.model;
 import java.util.*;
 
 
+/**
+ * Utility class for operations related to 2x2 squares on the board.
+ * Provides methods for calculating top-left coordinates of valid square regions.
+ */
+
 final class Squares {
     private Squares() {}
 
     /** Top-left coordinates of 2×2 blocks that could include `p`. */
+    /**
+     * Calculates the top-left coordinates of all valid 2x2 blocks that include the given point.
+     *
+     * @param board the game board
+     * @param p the reference point
+     * @return a list of top-left coordinates for 2x2 blocks containing the point
+     */
     static List<Point> topLeftsAround(Board board, Point p) {
         int x = p.x(), y = p.y();
         // candidates: (x-1,y-1), (x-1,y), (x,y-1), (x,y)

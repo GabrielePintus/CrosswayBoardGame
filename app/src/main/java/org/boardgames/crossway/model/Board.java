@@ -85,6 +85,11 @@ public class Board {
         return size;
     }
 
+    /**
+     * Clears the stone at the specified point on the board.
+     *
+     * @param last the point whose stone should be removed
+     */
     public void clearCell(Point last) {
         if (grid.containsKey(last)) {
             grid.remove(last);

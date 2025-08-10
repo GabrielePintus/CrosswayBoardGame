@@ -23,10 +23,23 @@ public record Point(int x, int y) implements Exportable {
     }
 
 
+    /**
+     * Encodes this point into a string representation in the format (x=?,y=?).
+     *
+     * @return the encoded string representation of this point
+     */
     public String encode() {
         return "(x=" + x + ",y=" + y + ")".strip();
     }
 
+    /**
+     * Creates a Point instance from its string representation.
+     * The expected format is (x=?,y=?).
+     *
+     * @param pointString the string containing the point coordinates
+     * @return a new Point instance parsed from the string
+     * @throws NumberFormatException if the coordinates are not valid integers
+     */
     public static Point fromString(String pointString) {
         // Remove the surrounding parentheses
         pointString = pointString.replace("(", "").replace(")", "");
