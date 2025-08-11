@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class HistoryView extends JPanel {
 
-    private static final int EXPANDED_WIDTH = 200;
+    public static final int MIN_WIDTH = 200;
 
     private final JList<String> moveList;
     private final DefaultListModel<String> listModel;
@@ -29,7 +29,7 @@ public class HistoryView extends JPanel {
 
         // Move list
         listModel = new DefaultListModel<>();
-        moveList = new JList<>(listModel);
+        moveList = new JList<String>(listModel);
         moveList.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         JScrollPane scrollPane = new JScrollPane(moveList);
 
@@ -38,6 +38,7 @@ public class HistoryView extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
 
         // Initial state - hidden
+        setMinimumSize(new Dimension(0, 400));
         setPreferredSize(new Dimension(0, 400));
         setVisible(false);
     }
@@ -48,14 +49,7 @@ public class HistoryView extends JPanel {
      */
     public void toggleVisibility() {
         isVisible = !isVisible;
-
-        if (isVisible) {
-            setPreferredSize(new Dimension(EXPANDED_WIDTH, getHeight()));
-            setVisible(true);
-        } else {
-            setPreferredSize(new Dimension(0, getHeight()));
-            setVisible(false);
-        }
+        setVisible(isVisible);
 
         // Trigger parent container to revalidate
         Container parent = getParent();
@@ -96,14 +90,5 @@ public class HistoryView extends JPanel {
         if (!listModel.isEmpty()) {
             moveList.ensureIndexIsVisible(listModel.getSize() - 1);
         }
-    }
-
-    /**
-     * Gets the width of the history view when expanded.
-     *
-     * @return the expanded width in pixels
-     */
-    public int getExpandedWidth() {
-        return EXPANDED_WIDTH;
     }
 }

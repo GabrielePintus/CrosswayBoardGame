@@ -7,6 +7,8 @@ import org.boardgames.crossway.ui.HistoryView;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -83,6 +85,7 @@ public class CrosswayController {
     /** The history view for displaying game history */
     private HistoryView historyView;
 
+    private JSplitPane splitPane;
 
     /** The main application window */
     private JFrame frame;
@@ -183,6 +186,13 @@ public class CrosswayController {
         frame.setLayout(new BorderLayout()); // Add this line
         frame.add(view, BorderLayout.CENTER); // Modify this line
         frame.add(historyView, BorderLayout.EAST); // Add this line
+
+        // TEST
+        splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, view, historyView);
+        splitPane.setResizeWeight(0.0);
+        splitPane.setContinuousLayout(true);
+        splitPane.setOneTouchExpandable(false);
+        frame.add(splitPane, BorderLayout.CENTER);
     }
 
     /**
@@ -483,16 +493,24 @@ public class CrosswayController {
      * Handles requests to show/hide the game history.
      */
     private void handleShowHistoryRequest() {
-        // Placeholder for future implementation
-        historyView.toggleVisibility();
-
-        // Expand window size
-        int widthDiff = historyView.getExpandedWidth();
-        int newSize = historyView.isHistoryVisible() ? frame.getWidth() + widthDiff : frame.getWidth() - widthDiff;
-        frame.setSize(newSize, frame.getHeight());
-
-        // Update menu text based on visibility state
-        JMenu viewMenu = (JMenu) frame.getJMenuBar().getMenu(1); // View menu is 3rd (index 2)
+        boolean show = !historyView.isHistoryVisible();
+        historyView.toggleVisibility(); // Flips boolean
+        int preferredBoard = view.getPreferredSize().width;
+        int minHistory = HistoryView.MIN_WIDTH; // Static access or field
+        int currentW = frame.getWidth();
+        if (show) {
+            int needed = preferredBoard + minHistory;
+            if (currentW < needed) {
+                frame.setSize(needed, frame.getHeight());
+            }
+            splitPane.setDividerLocation(preferredBoard);
+        } else {
+            int currentHistoryW = splitPane.getWidth() - splitPane.getDividerLocation() - splitPane.getDividerSize();
+            splitPane.setDividerLocation(splitPane.getWidth());
+            frame.setSize(currentW - currentHistoryW, frame.getHeight());
+        }
+        // Update menu text
+        JMenu viewMenu = frame.getJMenuBar().getMenu(1);
         JMenuItem historyItem = viewMenu.getItem(0);
         historyItem.setText(historyView.isHistoryVisible() ? "Hide History" : "Show History");
     }
@@ -578,7 +596,16 @@ public class CrosswayController {
         frame.setLayout(new BorderLayout()); // Add this line
         frame.add(view, BorderLayout.CENTER); // Modify this line
         frame.add(historyView, BorderLayout.EAST); // Add this line
+
+        // TEST
+        splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, view, historyView);
+        splitPane.setResizeWeight(0.0);
+        splitPane.setContinuousLayout(true);
+        splitPane.setOneTouchExpandable(false);
+        frame.add(splitPane, BorderLayout.CENTER);
+
         frame.pack();
+        splitPane.setDividerLocation(splitPane.getWidth());
     }
 
     /**
