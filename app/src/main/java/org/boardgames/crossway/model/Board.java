@@ -1,18 +1,31 @@
 package org.boardgames.crossway.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.boardgames.crossway.model.BoardSize;
 import org.boardgames.crossway.model.Point;
 import org.boardgames.crossway.model.Stone;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
 /**
  * Represents the Go board with a fixed size.
  * Manages the placement and state of stones on the board.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Board {
+
+    private static final ObjectMapper MAPPER =
+            new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
+
     private final BoardSize size;
     private final Map<Point, Stone> grid;
 
@@ -24,6 +37,28 @@ public class Board {
     public Board(BoardSize size) {
         this.size = size;
         this.grid = new HashMap<>();
+    }
+
+    /**
+     *
+     * @param size
+     * @param stones
+     */
+    @JsonCreator
+    public Board(
+            @JsonProperty("size") BoardSize size,
+            @JsonProperty("stones") List<Move> stones
+    ) {
+        this(size);
+        if (stones != null) {
+            for (Move m : stones) {
+                Point p = m.getPoint();
+                if (!isOnBoard(p)) {
+                    throw new IllegalArgumentException("Stone out of bounds at " + p);
+                }
+                grid.put(p, m.getStone());
+            }
+        }
     }
 
     /**
@@ -81,8 +116,38 @@ public class Board {
      *
      * @return the size of the board
      */
+    @JsonProperty("size")
     public BoardSize getSize() {
         return size;
+    }
+
+    /**
+     *
+     * @return
+     */
+    @JsonProperty("stones")
+    public List<Move> getStones() {
+        return grid.entrySet().stream()
+                .sorted(Comparator.comparingInt((Map.Entry<Point, Stone> e) -> e.getKey().x())
+                        .thenComparingInt(e -> e.getKey().y()))
+                .map(e -> new Move(e.getKey(), e.getValue()))
+                .collect(Collectors.toList());
+    }
+
+    public String toJson() {
+        try {
+            return MAPPER.writeValueAsString(this);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize Board", e);
+        }
+    }
+
+    public static Board fromJson(String json) {
+        try {
+            return MAPPER.readValue(json, Board.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Invalid JSON for Board", e);
+        }
     }
 
     /**

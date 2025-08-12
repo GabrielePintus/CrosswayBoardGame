@@ -23,6 +23,8 @@ dependencies {
 
     // This dependency is used by the application.
     implementation(libs.guava)
+
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.16.1")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -40,9 +42,13 @@ application {
 tasks.named<Test>("test") {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
+    // Allow printing to the console during tests.
+    testLogging {
+        events("standard_error")
+    }
 }
 
 tasks.named<Zip>("distZip") {
-    archiveFileName.set("CrossWay-1.0-BETA.zip")
+    archiveFileName.set("CrossWay-1.1.0-BETA.zip")
 }
 
