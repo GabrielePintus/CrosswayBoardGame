@@ -11,5 +11,5 @@ public interface Exportable {
      *
      * @return a string representing the encoded state of this object
      */
-    public String encode();
+    public String toJson();
 }

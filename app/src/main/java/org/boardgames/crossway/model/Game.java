@@ -1,8 +1,14 @@
 package org.boardgames.crossway.model;
 
+import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
 /**
  * Core game logic implementation for the Crossway board game.
@@ -32,15 +38,22 @@ import java.util.stream.Collectors;
  * @see Connectivity
  * @see PatternChecker
  */
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Game implements Exportable {
 
     // ========== Constants ==========
     private static final Stone DEFAULT_STARTING_PLAYER = Stone.BLACK;
     private static final String INVALID_PLACEMENT_MESSAGE = "Invalid point for placing stone: ";
+    private static final ObjectMapper MAPPER =
+            new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     // ========== Core Components ==========
     private Board board;
+    @JsonIgnore // rebuilt from board when loading
     private final PatternChecker patternChecker;
+    @JsonIgnore // rebuilt from board when loading
     private final Connectivity connectivity;
     private final History history;
 
@@ -82,6 +95,30 @@ public class Game implements Exportable {
      */
     public Game(BoardSize boardSize) {
         this(new Board(boardSize));
+    }
+
+    /**
+     * Constructs a game instance from a serialized JSON string.
+     *
+     * <p>This constructor is used for deserializing game state from
+     * a JSON representation. It initializes the board, history, and
+     * current player based on the provided JSON data.</p>
+     * @throws IllegalArgumentException if json is null or empty
+     */
+    @JsonCreator
+    public Game(
+            @JsonProperty("board") Board board,
+            @JsonProperty("history") History history,
+            @JsonProperty("currentPlayer") Stone currentPlayer
+    ) {
+        if (board == null) throw new IllegalArgumentException("Board cannot be null");
+        this.board = board;
+        this.history = (history != null) ? history : new History();
+        this.currentPlayer = (currentPlayer != null) ? currentPlayer : DEFAULT_STARTING_PLAYER;
+
+        // rebuild transient components
+        this.connectivity = new Connectivity(board);
+        this.patternChecker = createDefaultPatternChecker();
     }
 
     // ========== Initialization Methods ==========
@@ -259,23 +296,15 @@ public class Game implements Exportable {
         return history.getPastMoves();
     }
 
-    /**
-     * Gets the stone color of the player whose turn it is.
-     *
-     * @return the current player's stone color
-     */
-    public Stone getCurrentPlayer() {
-        return currentPlayer;
-    }
+    @JsonProperty("board")
+    public Board getBoard() { return board; }
 
-    /**
-     * Gets the game board instance.
-     *
-     * @return the underlying board
-     */
-    public Board getBoard() {
-        return board;
-    }
+    @JsonProperty("history")
+    public History getHistory() { return history; }
+
+    @JsonProperty("currentPlayer")
+    public Stone getCurrentPlayer() { return currentPlayer; }
+
 
     // ========== Win Condition Checking ==========
 
@@ -309,14 +338,23 @@ public class Game implements Exportable {
      * @return a string representation of the current game state
      */
     @Override
-    public String encode() {
-        StringBuilder gameStateBuilder = new StringBuilder();
-
-        gameStateBuilder.append("Game{")
-                .append("currentPlayer=").append(currentPlayer)
-                .append(", history=").append(history.encode())
-                .append("}");
-
-        return gameStateBuilder.toString();
+    public String toJson() {
+        try {
+            return MAPPER.writeValueAsString(this);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize Game", e);
+        }
     }
+
+    public static Game fromJson(String json) {
+        try {
+            return MAPPER.readValue(json, Game.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Invalid JSON for Game", e);
+        }
+    }
+
+
+
+
 }

@@ -1,9 +1,18 @@
 package org.boardgames.crossway.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
 /**
  * Linear history implementation with undo/redo functionality.
@@ -34,7 +43,12 @@ import java.util.stream.Collectors;
  * @author Your Name
  * @version 1.0
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public final class History implements Exportable {
+
+    private static final ObjectMapper MAPPER =
+            new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     // ========== Fields ==========
     private final Stack<Move> pastMoves;
@@ -49,6 +63,25 @@ public final class History implements Exportable {
     public History() {
         this.pastMoves = new Stack<>();
         this.futureMoves = new Stack<>();
+    }
+
+    /**
+     * Creates a new history instance with specified past and future moves.
+     *
+     * <p>Initializes the history with provided lists of past and future moves.
+     * If either list is null, it defaults to an empty stack.</p>
+     *
+     * @param pastMoves initial list of past moves
+     * @param futureMoves initial list of future moves
+     */
+    @JsonCreator
+    public History(
+            @JsonProperty("pastMoves") List<Move> pastMoves,
+            @JsonProperty("futureMoves") List<Move> futureMoves
+    ) {
+        this();
+        if (pastMoves != null) this.pastMoves.addAll(pastMoves);
+        if (futureMoves != null) this.futureMoves.addAll(futureMoves);
     }
 
     // ========== Move Management ==========
@@ -114,25 +147,61 @@ public final class History implements Exportable {
         return nextMove;
     }
 
+
     /**
      * Gets a copy of the past moves for display purposes.
      *
      * @return list of past moves in chronological order
      */
+    @JsonProperty("pastMoves")
     public List<Move> getPastMoves() {
         return new ArrayList<>(pastMoves);
     }
 
     /**
-     * Encodes the entire move history into a string representation.
-     * Includes both past and future moves for complete state reconstruction.
+     * Gets a copy of the future moves for display purposes.
      *
-     * @return a string representation of the move history
+     * <p>Future moves represent moves that can be redone after an undo operation.</p>
+     *
+     * @return list of future moves in reverse chronological order
      */
-    public String encode() {
-        String movesString = pastMoves.stream()
-                .map(Move::encode)
-                .collect(Collectors.joining(", "));
-        return String.format("History{ pastMoves=[%s]}", movesString);
+    @JsonProperty("futureMoves")
+    public List<Move> getFutureMoves() {
+        return new ArrayList<>(futureMoves);
+    }
+
+
+    /**
+     * Serializes the history to a JSON string.
+     *
+     * <p>This method converts the entire history, including both past and future moves,
+     * into a JSON string representation. It uses Jackson's ObjectMapper for serialization.</p>
+     * * @return a JSON string representing the history
+     * @throws IllegalStateException if serialization fails
+     */
+    public String toJson() {
+        try {
+            return MAPPER.writeValueAsString(this);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize History", e);
+        }
+    }
+
+    /**
+     * Parses a JSON string to create a History object.
+     *
+     * <p>This method deserializes the JSON representation of the history,
+     * including both past and future moves, into a History instance.</p>
+     *
+     * @param json the JSON string to parse
+     * @return a History object created from the JSON
+     * @throws IllegalArgumentException if the JSON is invalid
+     */
+    public static History fromJson(String json) {
+        try {
+            return MAPPER.readValue(json, History.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Invalid JSON for History", e);
+        }
     }
 }

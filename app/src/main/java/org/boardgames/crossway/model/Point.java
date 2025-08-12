@@ -1,12 +1,24 @@
 package org.boardgames.crossway.model;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+
 /**
  * Immutable record representing a point on the board.
  * Coordinates follow the standard (x, y) format, where:
  * - x is the column (horizontal)
  * - y is the row (vertical)
  */
+@JsonIgnoreProperties(ignoreUnknown = true)          // forward compatibility
+@JsonInclude(JsonInclude.Include.NON_NULL)           // cleaner output
 public record Point(int x, int y) implements Exportable {
 
     /**
@@ -22,35 +34,44 @@ public record Point(int x, int y) implements Exportable {
         return (Math.abs(this.x - other.x) <= 1 && Math.abs(this.y - other.y) <= 1);
     }
 
+    private static final ObjectMapper MAPPER =
+            new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
+
 
     /**
-     * Encodes this point into a string representation in the format (x=?,y=?).
-     *
-     * @return the encoded string representation of this point
+     * JSON creator for Jackson.
      */
-    public String encode() {
-        return "(x=" + x + ",y=" + y + ")".strip();
+    @JsonCreator
+    public Point(@JsonProperty("x") int x, @JsonProperty("y") int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+
+    /**
+     * Serializes this Point to a JSON string.
+     *
+     * @return JSON representation of the Point
+     */
+    public String toJson() {
+        try {
+            return MAPPER.writeValueAsString(this); // e.g., {"x":3,"y":5}
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize Point", e);
+        }
     }
 
     /**
-     * Creates a Point instance from its string representation.
-     * The expected format is (x=?,y=?).
+     * Deserializes a Point from a JSON string.
      *
-     * @param pointString the string containing the point coordinates
-     * @return a new Point instance parsed from the string
-     * @throws NumberFormatException if the coordinates are not valid integers
+     * @param json the JSON string
+     * @return a Point object
      */
-    public static Point fromString(String pointString) {
-        // Remove the surrounding parentheses
-        pointString = pointString.replace("(", "").replace(")", "");
-        // Split on equal sign
-        String[] parts = pointString.split(",");
-        String x_string = parts[0].substring(2);
-        String y_string = parts[1].substring(2);
-        // Parse the coordinates
-        int x = Integer.parseInt(x_string);
-        int y = Integer.parseInt(y_string);
-        // Return a new Point instance
-        return new Point(x, y);
+    public static Point fromJson(String json) {
+        try {
+            return MAPPER.readValue(json, Point.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Invalid JSON for Point", e);
+        }
     }
 }

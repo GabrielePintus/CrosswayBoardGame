@@ -40,17 +40,27 @@ public class PointTest {
     }
 
     @Test
-    void roundTripSimple() {
-        Point p = new Point(3, 7);
-        String enc = p.encode();
-
-        assertEquals("(x=" + 3 + ",y=" + 7 + ")", enc);
-        assertEquals(p, Point.fromString(enc));
+    @DisplayName("toJson: encodes as (x=?,y=?)")
+    void toJsonEncodesCustomFormat() {
+        Point p1 = new Point(3, 5);
+        Point p2 = new Point(-12, 63214);
+        String testString1 = "{\"x\":3,\"y\":5}";
+        String testString2 = "{\"x\":-12,\"y\":63214}";
+        assertEquals(testString1, p1.toJson());
+        assertEquals(testString2, p2.toJson());
+        assertNotEquals(testString2, p1.toJson());
     }
 
     @Test
-    void roundTripWithNegatives() {
-        Point p = new Point(-2, 0);
-        assertEquals(p, Point.fromString(p.encode()));
+    @DisplayName("Round-trip: toJson -> fromString")
+    void roundTripCustomFormat() {
+        Point p1 = new Point(3, 5);
+        Point p2 = new Point(-12, 63214);
+        String json1 = p1.toJson();
+        String json2 = p2.toJson();
+        Point p1FromJson = Point.fromJson(json1);
+        Point p2FromJson = Point.fromJson(json2);
+        assertEquals(p1, p1FromJson, "Point should match after serialization and deserialization");
+        assertEquals(p2, p2FromJson, "Point should match after serialization and deserialization");
     }
 }
