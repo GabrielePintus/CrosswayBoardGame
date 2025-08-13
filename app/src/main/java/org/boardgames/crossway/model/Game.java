@@ -348,7 +348,11 @@ public class Game implements Exportable {
 
     public static Game fromJson(String json) {
         try {
-            return MAPPER.readValue(json, Game.class);
+//            return MAPPER.readValue(json, Game.class);
+            Game game = MAPPER.readValue(json, Game.class);
+            // Fill the map
+
+            return game;
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Invalid JSON for Game", e);
         }
