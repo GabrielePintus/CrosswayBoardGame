@@ -45,44 +45,73 @@ import java.util.List;
  * }</pre>
  *
  * @author Crossway Development Team
- * @version 1.0
+ * @version 1.1
  * @since 1.0
  */
 public class CrosswayController {
 
     // ==================== Constants ====================
 
+    /** Title displayed in the main application window. */
     private static final String WINDOW_TITLE = "Crossway";
 
+    /** Options for board sizes available in the game.
+     * These are presented to the user when starting a new game.
+     */
     private static final String[] BOARD_SIZE_OPTIONS = {
             "Tiny (5x5)", "Small (9x9)", "Regular (19x19)", "Large (25x25)"
     };
 
+    /** Options shown in the win dialog allowing the user to choose the next action. */
     private static final String[] WIN_DIALOG_OPTIONS = { "New Game", "Restart", "Exit" };
 
+    /** Default index into {@link #BOARD_SIZE_OPTIONS} (Regular board). */
     private static final int DEFAULT_SIZE_INDEX = 2;     // Regular
+
+    /** Exact size used for the tiniest board preset. */
     private static final int TINY_BOARD_SIZE = 5;        // Exact size for tiny
+
+    /** File extension used for JSON import/export. */
     private static final String JSON_EXT = "json";
 
     // ==================== State ====================
 
+    /** Core game model holding rules, state, and move logic. */
     private Game game;
+
+    /** Swing component responsible for rendering the board. */
     private BoardView view;
+
+    /** Panel that renders and toggles the move history sidebar. */
     private HistoryView historyView;
+
+    /** Split pane that hosts the board and the optional history sidebar. */
     private JSplitPane splitPane;
+
+    /** Top-level Swing frame for the application. */
     private JFrame frame;
+
+    /** Current board size in cells (width == height). */
     private int boardSize;
 
     // ==================== Constructors ====================
 
+    /** Creates a controller with the default board size. */
     public CrosswayController() {
         this(BoardSize.REGULAR);
     }
 
+    /** Creates a controller for a predefined {@link BoardSize}.
+     * @param size the preset board size.
+     */
     public CrosswayController(BoardSize size) {
         this(size.size());
     }
 
+    /** Creates a controller with an explicit board size.
+     * @param boardSize the board dimension (cells per side).
+     * @throws IllegalArgumentException if the size is too small.
+     */
     public CrosswayController(int boardSize) {
         validateBoardSize(boardSize);
         this.boardSize = boardSize;
@@ -94,18 +123,24 @@ public class CrosswayController {
 
     // ==================== Initialization ====================
 
+    /** Validates the provided board size.
+     * @param size the proposed board dimension.
+     * @throws IllegalArgumentException if {@code size} is below the minimum supported.
+     */
     private void validateBoardSize(int size) {
         if (size < 3) {
             throw new IllegalArgumentException("Board size must be at least 3x3");
         }
     }
 
+    /** Instantiates model and view components but does not lay them out. */
     private void initializeComponents() {
         game = new Game(new BoardSize(boardSize));
         view = new BoardView(game.getBoard());
         historyView = new HistoryView();
     }
 
+    /** Builds and lays out the application UI and menu bar. */
     private void setupUserInterface() {
         createMainWindow();
         configureWindowProperties();
@@ -113,10 +148,12 @@ public class CrosswayController {
         displayWindow();
     }
 
+    /** Creates the main application window and sets the content pane. */
     private void createMainWindow() {
         frame = new JFrame(WINDOW_TITLE);
     }
 
+    /** Applies standard frame properties (close operation, sizing, icons). */
     private void configureWindowProperties() {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(true);
@@ -140,6 +177,7 @@ public class CrosswayController {
         splitPane.setDividerLocation(splitPane.getWidth());
     }
 
+    /** Packs and shows the main frame on screen. */
     private void displayWindow() {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
@@ -147,6 +185,9 @@ public class CrosswayController {
 
     // ==================== Menu ====================
 
+    /** Creates the application menu bar.
+     * @return a configured {@link JMenuBar} instance.
+     */
     private JMenuBar createApplicationMenuBar() {
         JMenuBar menuBar = new JMenuBar();
 
@@ -157,44 +198,69 @@ public class CrosswayController {
         return menuBar;
     }
 
+    /** Adds the File/View/Game menus to the left side of the bar.
+     * @param menuBar the target menu bar.
+     */
     private void addLeftAlignedMenus(JMenuBar menuBar) {
         menuBar.add(createFileMenu());
         menuBar.add(createViewMenu());
         menuBar.add(createGameMenu());
     }
 
+    /** Builds the File menu with import/export and exit.
+     * @return the File menu.
+     */
     private JMenu createFileMenu() {
         JMenu fileMenu = new JMenu("File");
         fileMenu.add(createMenuItem("Import Game", this::handleImportRequest));
         fileMenu.add(createMenuItem("Export Game", this::handleExportRequest));
+        fileMenu.add(createMenuItem("Exit", this::handleExitRequest));
         return fileMenu;
     }
 
+    /** Builds the View menu with history toggle and board size options.
+     * @return the View menu.
+     */
     private JMenu createViewMenu() {
         JMenu viewMenu = new JMenu("View");
         viewMenu.add(createMenuItem("Show History", this::handleShowHistoryRequest));
         return viewMenu;
     }
 
+    /** Builds the Game menu with Undo/Redo and New Game/Restart.
+     * @return the Game menu.
+     */
     private JMenu createGameMenu() {
         JMenu gameMenu = new JMenu("Game");
         gameMenu.add(createMenuItem("New Game", this::handleNewGameRequest));
         gameMenu.add(createMenuItem("Restart", this::handleRestartRequest));
-        gameMenu.add(createMenuItem("Exit", this::handleExitRequest));
         return gameMenu;
     }
 
+    /** Utility to create a menu item bound to a {@link Runnable} action.
+     * @param text the menu item label.
+     * @param action the action to run when selected.
+     * @return the created menu item.
+     */
     private JMenuItem createMenuItem(String text, Runnable action) {
         JMenuItem item = new JMenuItem(text);
         item.addActionListener(e -> action.run());
         return item;
     }
 
+    /** Adds right-aligned toolbar-style buttons (Undo/Redo, Import/Export).
+     * @param menuBar the target menu bar.
+     */
     private void addRightAlignedButtons(JMenuBar menuBar) {
         menuBar.add(createToolbarButton("Undo", this::handleUndoRequest));
         menuBar.add(createToolbarButton("Redo", this::handleRedoRequest));
     }
 
+    /** Creates a button for the menu bar's right side.
+     * @param label text to display.
+     * @param action action executed on click.
+     * @return a configured {@link JButton}.
+     */
     private JButton createToolbarButton(String label, Runnable action) {
         JButton btn = new JButton(label);
         btn.addActionListener(e -> action.run());
@@ -203,20 +269,24 @@ public class CrosswayController {
 
     // ==================== Event wiring ====================
 
+    /** Attaches listeners for resize, mouse interaction, and window events. */
     private void attachEventHandlers() {
         attachBoardMouseHandler();
     }
 
+    /** Removes existing mouse listeners from the board view to avoid duplicates. */
     private void detachBoardMouseHandlers() {
         for (var ml : view.getMouseListeners()) {
             view.removeMouseListener(ml);
         }
     }
 
+    /** Installs a mouse listener on the board view to handle move input. */
     private void attachBoardMouseHandler() {
         view.addMouseListener(new BoardMouseHandler());
     }
 
+    /** Attaches a component listener to handle window resize events. */
     private class BoardMouseHandler extends MouseAdapter {
         @Override
         public void mouseReleased(MouseEvent e) {
@@ -226,6 +296,9 @@ public class CrosswayController {
 
     // ==================== Input → Model ====================
 
+    /** Processes a mouse click and attempts to place a stone.
+     * @param mouseEvent the originating mouse event.
+     */
     private void processMouseClick(MouseEvent mouseEvent) {
         Point boardCoordinate = convertMouseToBoardCoordinate(mouseEvent);
         Stone currentPlayer = game.getCurrentPlayer();
@@ -236,6 +309,10 @@ public class CrosswayController {
         }
     }
 
+    /** Converts screen coordinates to a board coordinate.
+     * @param mouseEvent the mouse event containing the click location.
+     * @return the board coordinate, or {@code null} if outside the board.
+     */
     private Point convertMouseToBoardCoordinate(MouseEvent mouseEvent) {
         int cellSize = view.getCellSize();
         int boardX = mouseEvent.getX() / cellSize;
@@ -243,6 +320,12 @@ public class CrosswayController {
         return new Point(boardX, boardY);
     }
 
+    /** Attempts to place a stone for {@code player} at {@code position}.
+     * @param position board coordinate.
+     * @param player the player making the move.
+     * @return {@code true} if the move was executed.
+     * @throws IllegalArgumentException if the move is illegal.
+     */
     private boolean attemptMoveExecution(Point position, Stone player) {
         try {
             game.makeMove(new Move(position, player));
@@ -254,10 +337,14 @@ public class CrosswayController {
         }
     }
 
+    /** Repaints the board and updates any dependent UI state. */
     private void refreshBoardDisplay() {
         view.repaint();
     }
 
+    /** Checks if the specified player has achieved a winning connection.
+     * @param currentPlayer the player whose victory is evaluated.
+     */
     private void checkForGameCompletion(Stone currentPlayer) {
         if (game.hasWon(currentPlayer)) {
             int choice = JOptionPane.showOptionDialog(
@@ -274,6 +361,9 @@ public class CrosswayController {
         }
     }
 
+    /** Handles the result of the win dialog.
+     * @param choice index of the selected option.
+     */
     private void processWinDialogChoice(int choice) {
         switch (choice) {
             case 0 -> handleNewGameRequest();
@@ -285,6 +375,7 @@ public class CrosswayController {
 
     // ==================== View menu actions ====================
 
+    /** Toggles the visibility of the move history sidebar. */
     private void handleShowHistoryRequest() {
         boolean willShow = !historyView.isHistoryVisible();
         historyView.toggleVisibility();
@@ -311,6 +402,7 @@ public class CrosswayController {
 
     // ==================== Game menu actions ====================
 
+    /** Handles the request to start a new game with a selected board size. */
     private void handleNewGameRequest() {
         int sizeSelection = promptForBoardSize();
         if (isValidSizeSelection(sizeSelection)) {
@@ -319,6 +411,9 @@ public class CrosswayController {
         }
     }
 
+    /** Prompts the user to select a board size for a new game.
+     * @return index of the selected board size option, or -1 if cancelled.
+     */
     private int promptForBoardSize() {
         return JOptionPane.showOptionDialog(
                 frame,
@@ -332,10 +427,17 @@ public class CrosswayController {
         );
     }
 
+    /** Validates the board size selection.
+     * @param selection index of the selected board size option.
+     * @return {@code true} if the selection is valid.
+     */
     private boolean isValidSizeSelection(int selection) {
         return selection >= 0 && selection < BOARD_SIZE_OPTIONS.length;
     }
 
+    /** Updates the board size based on the user's selection.
+     * @param selectionIndex index of the selected board size option.
+     */
     private void updateBoardSizeFromSelection(int selectionIndex) {
         boardSize = switch (selectionIndex) {
             case 0 -> TINY_BOARD_SIZE;
@@ -346,10 +448,16 @@ public class CrosswayController {
         };
     }
 
+    /** Handles the request to restart the game.
+     *  Reinitializes components and updates the UI.
+     */
     private void handleRestartRequest() {
         executeGameRestart();
     }
 
+    /** Restarts the game with the current board size.
+     *  Reinitializes components and updates the UI.
+     */
     private void executeGameRestart() {
         initializeComponents();
         rebuildAfterGameChange();
@@ -357,10 +465,12 @@ public class CrosswayController {
 
     // ==================== History & repaint ====================
 
+    /** Updates the history view with the current move history. */
     private void updateHistoryDisplay() {
         historyView.updateHistory(game.getMoveHistory());
     }
 
+    /** Revalidates and repaints the main frame after structural UI changes. */
     private void refreshWindow() {
         frame.revalidate();
         frame.repaint();
@@ -368,6 +478,7 @@ public class CrosswayController {
 
     // ==================== Undo/Redo ====================
 
+    /** Performs an Undo operation on the game, if possible. */
     private void handleUndoRequest() {
         try {
             game.undoLastMove();
@@ -378,6 +489,7 @@ public class CrosswayController {
         }
     }
 
+    /** Performs a Redo operation on the game, if possible. */
     private void handleRedoRequest() {
         try {
             game.redoLastMove();
@@ -390,6 +502,7 @@ public class CrosswayController {
 
     // ==================== Import/Export ====================
 
+    /** Prompts the user to export the current game state to a JSON file. */
     private void handleExportRequest() {
         JFileChooser chooser = createJsonFileChooser("Export Game");
         int choice = chooser.showSaveDialog(frame);
@@ -400,6 +513,7 @@ public class CrosswayController {
         }
     }
 
+    /** Prompts the user to import a game state from a JSON file. */
     private void handleImportRequest() {
         JFileChooser chooser = createJsonFileChooser("Import Game");
         int choice = chooser.showOpenDialog(frame);
@@ -410,6 +524,10 @@ public class CrosswayController {
         }
     }
 
+    /** Creates a file chooser configured for JSON files.
+     * @param title dialog title.
+     * @return the configured chooser.
+     */
     private JFileChooser createJsonFileChooser(String title) {
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle(title);
@@ -418,6 +536,10 @@ public class CrosswayController {
         return chooser;
     }
 
+    /** Ensures the selected file has a .json extension.
+     * @param file base file.
+     * @return a file with the proper extension.
+     */
     private File ensureJsonExtension(File file) {
         String name = file.getName().toLowerCase();
         if (!name.endsWith("." + JSON_EXT)) {
@@ -426,6 +548,9 @@ public class CrosswayController {
         return file;
     }
 
+    /** Loads a game from a JSON file and updates the UI.
+     * @param targetFile the source file.
+     */
     private void executeGameImport(File targetFile) {
         try {
             if (!targetFile.exists() || !targetFile.canRead()) {
@@ -439,6 +564,9 @@ public class CrosswayController {
         }
     }
 
+    /** Saves the current game state to a JSON file.
+     * @param targetFile destination file.
+     */
     private void executeGameExport(File targetFile) {
         try {
             String gameData = game.toJson();
@@ -486,20 +614,33 @@ public class CrosswayController {
 
     // ==================== Dialog helpers ====================
 
+    /** Shows a warning dialog.
+     * @param title dialog title.
+     * @param message dialog message.
+     */
     private void showWarning(String title, String message) {
         JOptionPane.showMessageDialog(frame, message, title, JOptionPane.WARNING_MESSAGE);
     }
 
+    /** Shows an informational dialog.
+     * @param title dialog title.
+     * @param message dialog message.
+     */
     private void showInfo(String title, String message) {
         JOptionPane.showMessageDialog(frame, message, title, JOptionPane.INFORMATION_MESSAGE);
     }
 
+    /** Shows an error dialog.
+     * @param title dialog title.
+     * @param message dialog message.
+     */
     private void showError(String title, String message) {
         JOptionPane.showMessageDialog(frame, message, title, JOptionPane.ERROR_MESSAGE);
     }
 
     // ==================== Exit ====================
 
+    /** Exits the application. */
     private void handleExitRequest() {
         System.exit(0);
     }
