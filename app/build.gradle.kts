@@ -52,3 +52,15 @@ tasks.named<Zip>("distZip") {
     archiveFileName.set("CrossWay-1.1.0-BETA.zip")
 }
 
+tasks.withType<JavaCompile>().configureEach {
+    options.compilerArgs.addAll(listOf(
+        "-Xlint:deprecation",
+        "-Xlint:unchecked"
+        // "-Xlint:all"        // enable all checks
+        // "-Xlint:-serial"    // example: disable just 'serial' if noisy
+        // "-Werror"           // uncomment to treat warnings as errors
+    ))
+    // Also prints a summary count of deprecation warnings
+    options.isDeprecation = true
+}
+

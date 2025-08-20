@@ -6,9 +6,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.boardgames.crossway.model.BoardSize;
-import org.boardgames.crossway.model.Point;
-import org.boardgames.crossway.model.Stone;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,23 +13,42 @@ import java.util.stream.Collectors;
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
 /**
- * Represents the Go board with a fixed size.
- * Manages the placement and state of stones on the board.
+ * Represents the game board with a fixed square size.
+ * This class manages the state of stones placed on the board and provides
+ * methods for placement, retrieval, and serialization.
+ *
+ * <p>The board uses a {@link Map} to store the positions of placed stones,
+ * which makes it efficient for sparse board states and lookups. The class
+ * is designed to be easily serialized to and deserialized from JSON using
+ * the Jackson library.</p>
+ *
+ * @author Gabriele Pintus
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Board {
 
+    /**
+     * An ObjectMapper instance configured for JSON serialization and deserialization.
+     */
     private static final ObjectMapper MAPPER =
             new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
 
+    /**
+     * The size of the square board.
+     */
     private final BoardSize size;
+
+    /**
+     * The map storing the locations of stones on the board.
+     * The key is the {@link Point} and the value is the {@link Stone} color.
+     */
     private final Map<Point, Stone> grid;
 
     /**
      * Constructs a new empty board of a given size.
      *
-     * @param size the size of the board
+     * @param size The size of the board. Must not be null.
      */
     public Board(BoardSize size) {
         this.size = size;
@@ -40,29 +56,31 @@ public class Board {
     }
 
     /**
+     * Constructs a new board instance from a list of moves.
+     * This constructor is used by the Jackson library for deserialization.
+     * It populates the board grid with stones based on the provided moves.
      *
-     * @param size
-     * @param stones
+     * @param size The size of the board.
+     * @param stones A list of {@link Move} objects representing the stones to place.
+     * @throws IllegalArgumentException if a stone is out of the board's bounds.
      */
     @JsonCreator
-    public Board(
-            @JsonProperty("size") BoardSize size,
-            @JsonProperty("stones") List<Move> stones
-    ) {
+    public Board(@JsonProperty("size") BoardSize size,
+                 @JsonProperty("stones") List<Move> stones) {
         this(size);
         if (stones != null) {
-            for (Move m : stones) {
-                Point p = m.getPoint();
-                if (!isOnBoard(p)) {
-                    throw new IllegalArgumentException("Stone out of bounds at " + p);
+            for (Move move : stones) {
+                Point point = move.getPoint();
+                if (!isOnBoard(point)) {
+                    throw new IllegalArgumentException("Stone at " + point + " is out of bounds.");
                 }
-                grid.put(p, m.getStone());
+                grid.put(point, move.getStone());
             }
         }
     }
 
     /**
-     * Clear the board by removing all stones.
+     * Clears all stones from the board, resetting it to an empty state.
      */
     public void clear() {
         grid.clear();
@@ -71,32 +89,47 @@ public class Board {
     /**
      * Places a stone at a specified point on the board.
      *
-     * @param point the point to place the stone
-     * @param stone the stone to place
+     * @param point The point where the stone will be placed.
+     * @param stone The stone to be placed.
+     * @throws IllegalArgumentException if the point is out of the board's bounds.
      */
     public void placeStone(Point point, Stone stone) {
         if (!isOnBoard(point)) {
             throw new IllegalArgumentException("Point is out of bounds: " + point);
-        }else{
-            grid.put(point, stone);
         }
+        grid.put(point, stone);
+    }
+
+    /**
+     * Clears the stone at the specified point from the board.
+     *
+     * @param point The point whose stone should be removed.
+     * @throws IllegalArgumentException if there is no stone at the specified point.
+     */
+    public void clearCell(Point point) {
+        if (!grid.containsKey(point)) {
+            throw new IllegalArgumentException("No stone at point: " + point);
+        }
+        grid.remove(point);
     }
 
     /**
      * Retrieves the stone at a specified point on the board.
      *
-     * @param point the point to check
-     * @return an Optional containing the stone if present, or empty if no stone is found
+     * @param point The point to check.
+     * @return An {@link Optional} containing the stone if one is present at the point,
+     * or an empty {@link Optional} if the cell is empty.
      */
     public Optional<Stone> stoneAt(Point point) {
         return Optional.ofNullable(grid.get(point));
     }
 
     /**
-     * Check whether a point is not occupied by a stone.
+     * Checks whether a point on the board is not occupied by a stone.
+     * This also checks if the point is within the board's boundaries.
      *
-     * @param point the point to check
-     * @return true if empty, false otherwise
+     * @param point The point to check.
+     * @return {@code true} if the point is within bounds and is empty, {@code false} otherwise.
      */
     public boolean isEmpty(Point point) {
         return !grid.containsKey(point) && isOnBoard(point);
@@ -105,16 +138,18 @@ public class Board {
     /**
      * Checks whether the given point is within the bounds of the board.
      *
-     * @param point the point to check
-     * @return true if within bounds, false otherwise
+     * @param point The point to check.
+     * @return {@code true} if the point's coordinates are valid for this board,
+     * {@code false} otherwise.
      */
     public boolean isOnBoard(Point point) {
         return size.isInBounds(point);
     }
+
     /**
-     * Gets the board size.
+     * Gets the size of the board.
      *
-     * @return the size of the board
+     * @return The {@link BoardSize} object representing the dimensions of the board.
      */
     @JsonProperty("size")
     public BoardSize getSize() {
@@ -122,8 +157,11 @@ public class Board {
     }
 
     /**
+     * Gets a list of all stones on the board as a list of moves.
+     * This method is used for JSON serialization and returns a sorted list
+     * for consistent output.
      *
-     * @return
+     * @return A sorted {@link List} of {@link Move} objects representing the placed stones.
      */
     @JsonProperty("stones")
     public List<Move> getStones() {
@@ -134,6 +172,12 @@ public class Board {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Serializes the current board state into a JSON string.
+     *
+     * @return A JSON string representing the board.
+     * @throws IllegalStateException if serialization fails.
+     */
     public String toJson() {
         try {
             return MAPPER.writeValueAsString(this);
@@ -142,6 +186,13 @@ public class Board {
         }
     }
 
+    /**
+     * Deserializes a JSON string into a new {@code Board} instance.
+     *
+     * @param json The JSON string to deserialize.
+     * @return A new {@code Board} instance with the state from the JSON string.
+     * @throws IllegalArgumentException if the JSON is invalid or represents an invalid board state.
+     */
     public static Board fromJson(String json) {
         try {
             return MAPPER.readValue(json, Board.class);
@@ -149,17 +200,5 @@ public class Board {
             throw new IllegalArgumentException("Invalid JSON for Board", e);
         }
     }
-
-    /**
-     * Clears the stone at the specified point on the board.
-     *
-     * @param last the point whose stone should be removed
-     */
-    public void clearCell(Point last) {
-        if (grid.containsKey(last)) {
-            grid.remove(last);
-        } else {
-            throw new IllegalArgumentException("No stone at point: " + last);
-        }
-    }
 }
+
