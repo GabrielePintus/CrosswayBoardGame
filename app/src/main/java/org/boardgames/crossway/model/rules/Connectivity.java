@@ -1,6 +1,11 @@
-package org.boardgames.crossway.model;
+package org.boardgames.crossway.model.rules;
 
 
+
+import org.boardgames.crossway.model.Board;
+import org.boardgames.crossway.model.DisjointSet;
+import org.boardgames.crossway.model.Point;
+import org.boardgames.crossway.model.Stone;
 
 import java.util.*;
 

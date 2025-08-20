@@ -1,4 +1,6 @@
-package org.boardgames.crossway.model;
+package org.boardgames.crossway.model.rules;
+
+import org.boardgames.crossway.model.*;
 
 import java.util.Optional;
 

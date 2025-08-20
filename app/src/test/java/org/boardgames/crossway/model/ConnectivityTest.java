@@ -1,6 +1,6 @@
 package org.boardgames.crossway.model;
 
-import org.boardgames.crossway.model.*;
+import org.boardgames.crossway.model.rules.Connectivity;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 

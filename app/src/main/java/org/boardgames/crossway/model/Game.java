@@ -3,6 +3,7 @@ package org.boardgames.crossway.model;
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.boardgames.crossway.model.rules.*;
 
 import java.util.*;
 

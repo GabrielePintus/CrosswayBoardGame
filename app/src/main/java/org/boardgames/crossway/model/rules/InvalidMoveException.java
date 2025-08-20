@@ -1,4 +1,4 @@
-package org.boardgames.crossway.model;
+package org.boardgames.crossway.model.rules;
 
 public class InvalidMoveException extends IllegalArgumentException {
 

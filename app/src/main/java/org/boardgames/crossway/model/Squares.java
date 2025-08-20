@@ -8,7 +8,7 @@ import java.util.*;
  * Provides methods for calculating top-left coordinates of valid square regions.
  */
 
-final class Squares {
+public final class Squares {
     private Squares() {}
 
     /** Top-left coordinates of 2×2 blocks that could include `p`. */
@@ -19,7 +19,7 @@ final class Squares {
      * @param p the reference point
      * @return a list of top-left coordinates for 2x2 blocks containing the point
      */
-    static List<Point> topLeftsAround(Board board, Point p) {
+    public static List<Point> topLeftsAround(Board board, Point p) {
         int x = p.x(), y = p.y();
         // candidates: (x-1,y-1), (x-1,y), (x,y-1), (x,y)
         List<Point> cands = List.of(
