@@ -1,6 +1,9 @@
 package org.boardgames.crossway.model;
 
-import java.util.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public final class PatternChecker {
     private final List<PatternRule> rules;
@@ -17,11 +20,11 @@ public final class PatternChecker {
      * @return an Optional containing the first PatternViolation found, or empty if none
      */
     public Optional<PatternViolation> firstViolation(Board board, Move move) {
-        for (PatternRule r : rules) {
-            var v = r.validate(board, move);
-            if (v.isPresent()) return v;
-        }
-        return Optional.empty();
+        return rules.stream()
+                .map(r -> r.validate(board, move))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findFirst();
     }
 
     /**
@@ -43,8 +46,8 @@ public final class PatternChecker {
      * @return a list of all PatternViolation objects for the move
      */
     public List<PatternViolation> allViolations(Board board, Move move) {
-        List<PatternViolation> out = new ArrayList<>();
-        for (PatternRule r : rules) r.validate(board, move).ifPresent(out::add);
-        return out;
+        return rules.stream()
+                .flatMap(r -> r.validate(board, move).stream())
+                .collect(Collectors.toList());
     }
 }

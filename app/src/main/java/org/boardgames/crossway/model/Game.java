@@ -4,9 +4,7 @@ import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.Serializable;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
@@ -45,7 +43,6 @@ public class Game implements Exportable {
 
     // ========== Constants ==========
     private static final Stone DEFAULT_STARTING_PLAYER = Stone.BLACK;
-    private static final String INVALID_PLACEMENT_MESSAGE = "Invalid point for placing stone: ";
     private static final ObjectMapper MAPPER =
             new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
 
@@ -78,8 +75,9 @@ public class Game implements Exportable {
         }
 
         this.board = board;
-        this.connectivity = new Connectivity(board);
         this.patternChecker = createDefaultPatternChecker();
+        this.connectivity = new Connectivity(board);
+        this.connectivity.initFromBoard(board);
         this.history = new History();
         this.currentPlayer = DEFAULT_STARTING_PLAYER;
     }
@@ -117,8 +115,9 @@ public class Game implements Exportable {
         this.currentPlayer = (currentPlayer != null) ? currentPlayer : DEFAULT_STARTING_PLAYER;
 
         // rebuild transient components
-        this.connectivity = new Connectivity(board);
         this.patternChecker = createDefaultPatternChecker();
+        this.connectivity = new Connectivity(board);
+        this.connectivity.initFromBoard(board);
     }
 
     // ========== Initialization Methods ==========
@@ -129,7 +128,11 @@ public class Game implements Exportable {
      * @return a configured PatternChecker with default rules
      */
     private PatternChecker createDefaultPatternChecker() {
-        List<PatternRule> defaultRules = List.of(new DiagonalXRule());
+        List<PatternRule> defaultRules = List.of(
+                new BoundsRule(),
+                new EmptyRule(),
+                new DiagonalXRule()
+        );
         return new PatternChecker(defaultRules);
     }
 
@@ -138,44 +141,24 @@ public class Game implements Exportable {
     /**
      * Validates whether a stone can be legally placed at the specified position.
      *
-     * <p>This method performs comprehensive validation including:</p>
-     * <ul>
-     *   <li>Position bounds checking</li>
-     *   <li>Cell occupancy verification</li>
-     *   <li>Pattern rule compliance</li>
-     * </ul>
+     * <p>This method delegates comprehensive validation to the PatternChecker,
+     * including bounds checking, cell occupancy verification, and pattern rule compliance.</p>
      *
      * @param point the board position to validate
      * @param stone the stone color to place
      * @return true if the placement is legal, false otherwise
      */
     public boolean canPlace(Point point, Stone stone) {
-        // Validate position is within board bounds
-        if (!board.isOnBoard(point)) {
-            return false;
-        }
-
-        // Verify the cell is empty
-        if (board.stoneAt(point).isPresent()) {
-            return false;
-        }
-
-        // Check pattern rules compliance
-        Move proposedMove = new Move(point, stone);
-        return patternChecker.isAllowed(board, proposedMove);
+        return patternChecker.isAllowed(board, new Move(point, stone));
     }
 
-    // ========== Move Execution ==========
+    // ========== Placement ==========
 
     /**
-     * Executes a validated move by placing a stone on the board.
+     * Places a stone at the specified point and updates connectivity.
      *
-     * <p>This method handles the low-level placement mechanics including
-     * creating a connectivity checkpoint for potential rollback, updating
-     * the board state, and maintaining connectivity information.</p>
-     *
-     * @param point the position where to place the stone
-     * @param stone the stone color to place
+     * @param point the position to place the stone
+     * @param stone the stone to place
      */
     private void place(Point point, Stone stone) {
         // Create checkpoint for potential undo operation
@@ -196,31 +179,21 @@ public class Game implements Exportable {
      * to the next player. If the move is invalid, an exception is thrown.</p>
      *
      * @param move the move to execute
-     * @throws IllegalArgumentException if the move is invalid
+     * @throws InvalidMoveException if the move is invalid
      */
     public void makeMove(Move move) {
-        Point movePoint = move.getPoint();
-        Stone moveStone = move.getStone();
-
-        // Validate the proposed move
-        if (!canPlace(movePoint, moveStone)) {
-            throw new IllegalArgumentException(INVALID_PLACEMENT_MESSAGE + movePoint);
+        Optional<PatternViolation> violation = patternChecker.firstViolation(board, move);
+        if (violation.isPresent()) {
+            throw new InvalidMoveException(violation.get());
         }
 
         // Execute the move
-        place(movePoint, moveStone);
+        place(move.getPoint(), move.getStone());
 
         // Record the move in history
         history.commit(move);
 
         // Switch to the next player
-        switchToNextPlayer();
-    }
-
-    /**
-     * Switches the current player to the opposite color.
-     */
-    private void switchToNextPlayer() {
         currentPlayer = currentPlayer.opposite();
     }
 
@@ -282,7 +255,7 @@ public class Game implements Exportable {
 
         // Re-apply the move without committing to history (history.redo() already did)
         place(m.getPoint(), m.getStone());  // creates checkpoint, updates board & connectivity
-        switchToNextPlayer();
+        currentPlayer = currentPlayer.opposite();
     }
 
     // ========== Game State Queries ==========
@@ -348,10 +321,7 @@ public class Game implements Exportable {
 
     public static Game fromJson(String json) {
         try {
-//            return MAPPER.readValue(json, Game.class);
             Game game = MAPPER.readValue(json, Game.class);
-            // Fill the map
-
             return game;
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Invalid JSON for Game", e);

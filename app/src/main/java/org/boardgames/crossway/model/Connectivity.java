@@ -1,6 +1,7 @@
 package org.boardgames.crossway.model;
 
 
+
 import java.util.*;
 
 public final class Connectivity {
@@ -27,6 +28,11 @@ public final class Connectivity {
         // Initial build (optional if board starts empty)
         uf.clear();
         border.values().forEach(uf::makeSet);
+    }
+
+    /** Initializes connectivity from the current board state by placing all existing stones. */
+    public void initFromBoard(Board board) {
+        board.getStones().stream().forEach(m -> onPlace(m.getPoint(), m.getStone()));
     }
 
     /** Call before placing a stone; pairs with rollback() on undo. */
