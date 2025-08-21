@@ -202,4 +202,5 @@ public class BoardView extends JPanel {
         g2d.setColor(Color.BLACK);
         g2d.drawOval(x, y, diameter, diameter);
     }
+
 }

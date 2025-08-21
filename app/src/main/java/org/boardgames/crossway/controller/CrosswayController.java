@@ -2,9 +2,11 @@ package org.boardgames.crossway.controller;
 
 import org.boardgames.crossway.model.*;
 import org.boardgames.crossway.model.Point;
+import org.boardgames.crossway.ui.BoardHistorySplitPane;
 import org.boardgames.crossway.ui.BoardView;
 import org.boardgames.crossway.ui.HistoryView;
 import org.boardgames.crossway.utils.GameSerializer;
+import org.boardgames.crossway.utils.JsonUtils;
 import org.boardgames.crossway.utils.Messages;
 import org.boardgames.crossway.utils.Settings;
 
@@ -14,8 +16,6 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.nio.file.Files;
-import java.util.List;
 import java.util.Locale;
 
 /**
@@ -62,7 +62,7 @@ public class CrosswayController {
 
     /** The file extension used for saving and loading game files. */
 //    private static final String JSON_EXT = "json";
-    private static final String JSON_EXT = Settings.get("files.defaultExtension");
+//    private static final String JSON_EXT = Settings.get("files.defaultExtension");
 
     // ==================== State ====================
 
@@ -76,7 +76,8 @@ public class CrosswayController {
     private HistoryView historyView;
 
     /** The split pane that separates the board view from the history view. */
-    private JSplitPane splitPane;
+//    private JSplitPane splitPane;
+    private BoardHistorySplitPane splitPane;
 
     /** The main application window. */
     private JFrame frame;
@@ -137,8 +138,11 @@ public class CrosswayController {
      */
     private void initializeComponents() {
         game = new Game(new BoardSize(boardSize));
-        view = new BoardView(game.getBoard());
-        historyView = new HistoryView();
+//        view = new BoardView(game.getBoard());
+//        historyView = new HistoryView();
+        splitPane = new BoardHistorySplitPane(new BoardView(game.getBoard()));
+        view = splitPane.getBoardView();
+        historyView = splitPane.getHistoryView();
     }
 
     /**
@@ -174,10 +178,10 @@ public class CrosswayController {
         frame.getContentPane().removeAll();
         frame.setLayout(new BorderLayout());
 
-        splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, view, historyView);
-        splitPane.setResizeWeight(0.0);
-        splitPane.setContinuousLayout(true);
-        splitPane.setOneTouchExpandable(false);
+//        splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, view, historyView);
+//        splitPane.setResizeWeight(0.0);
+//        splitPane.setContinuousLayout(true);
+//        splitPane.setOneTouchExpandable(false);
 
         frame.add(splitPane, BorderLayout.CENTER);
         frame.pack();
@@ -258,7 +262,7 @@ public class CrosswayController {
      *
      * @param newLocale The new locale to switch to
      */
-    private void handleLanguageChange(Locale newLocale) {
+    public void handleLanguageChange(Locale newLocale) {
         // Update the Messages locale
         Messages.setLocale(newLocale);
 
@@ -456,36 +460,19 @@ public class CrosswayController {
     /**
      * Toggles the visibility of the move history sidebar.
      */
-    private void handleShowHistoryRequest() {
-        boolean willShow = !historyView.isHistoryVisible();
-        historyView.toggleVisibility();
-
-        int preferredBoardWidth = view.getPreferredSize().width;
-        int minHistoryWidth = HistoryView.MIN_WIDTH;
-        int currentWindowWidth = frame.getWidth();
-
-        if (willShow) {
-            int neededWidth = preferredBoardWidth + minHistoryWidth + splitPane.getDividerSize();
-            if (currentWindowWidth < neededWidth) {
-                frame.setSize(neededWidth, frame.getHeight());
-            }
-            splitPane.setDividerLocation(preferredBoardWidth);
-        } else {
-            int historyWidth = splitPane.getWidth() - splitPane.getDividerLocation() - splitPane.getDividerSize();
-            splitPane.setDividerLocation(splitPane.getWidth());
-            frame.setSize(currentWindowWidth - historyWidth, frame.getHeight());
-        }
-
+    public void handleShowHistoryRequest() {
         // Update the menu item text to reflect the new state.
         JMenu viewMenu = frame.getJMenuBar().getMenu(1);
         JMenuItem historyItem = viewMenu.getItem(0);
-        historyItem.setText(historyView.isHistoryVisible() ? Messages.get("menu.view.hideHistory") : Messages.get("menu.view.showHistory"));
+        System.out.println(splitPane.isHistoryVisible());
+        splitPane.toggleHistory();
+        historyItem.setText(splitPane.isHistoryVisible() ? Messages.get("menu.view.hideHistory") : Messages.get("menu.view.showHistory"));
     }
 
     /**
      * Handles the request to start a new game by prompting the user for a board size.
      */
-    private void handleNewGameRequest() {
+    public void handleNewGameRequest() {
         int sizeSelection = promptForBoardSize();
         if (isValidSizeSelection(sizeSelection)) {
             updateBoardSizeFromSelection(sizeSelection);
@@ -538,7 +525,7 @@ public class CrosswayController {
     /**
      * Handles the request to restart the current game with the same board size.
      */
-    private void handleRestartRequest() {
+    public void handleRestartRequest() {
         executeGameRestart();
     }
 
@@ -579,7 +566,7 @@ public class CrosswayController {
     /**
      * Attempts to undo the last move in the game.
      */
-    private void handleUndoRequest() {
+    public void handleUndoRequest() {
         try {
             game.undoLastMove();
             refreshBoardDisplay();
@@ -595,7 +582,7 @@ public class CrosswayController {
     /**
      * Attempts to redo the last undone move.
      */
-    private void handleRedoRequest() {
+    public void handleRedoRequest() {
         try {
             game.redoLastMove();
             refreshBoardDisplay();
@@ -613,19 +600,19 @@ public class CrosswayController {
     /**
      * Prompts the user to save the current game state to a JSON file.
      */
-    private void handleExportRequest() {
+    public void handleExportRequest() {
         JFileChooser chooser = createJsonFileChooser(Messages.get("menu.file.export"));
         int choice = chooser.showSaveDialog(frame);
         if (choice == JFileChooser.APPROVE_OPTION) {
             File selectedFile = chooser.getSelectedFile();
-            executeGameExport(ensureJsonExtension(selectedFile));
+            executeGameExport(JsonUtils.ensureJsonExtension(selectedFile));
         }
     }
 
     /**
      * Prompts the user to load a game state from a JSON file.
      */
-    private void handleImportRequest() {
+    public void handleImportRequest() {
         JFileChooser chooser = createJsonFileChooser(Messages.get("menu.file.import"));
         int choice = chooser.showOpenDialog(frame);
         if (choice == JFileChooser.APPROVE_OPTION) {
@@ -645,24 +632,10 @@ public class CrosswayController {
         chooser.setDialogTitle(title);
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                Messages.get("file.filter.json"), JSON_EXT
+                Messages.get("file.filter.json"), JsonUtils.JSON_EXT
         );
         chooser.setFileFilter(filter);
         return chooser;
-    }
-
-    /**
-     * Ensures that a file has the correct JSON extension.
-     *
-     * @param file The file to check.
-     * @return A {@link File} object with the proper extension.
-     */
-    private File ensureJsonExtension(File file) {
-        String name = file.getName().toLowerCase();
-        if (!name.endsWith("." + JSON_EXT)) {
-            return new File(file.getParentFile(), file.getName() + "." + JSON_EXT);
-        }
-        return file;
     }
 
     /**
@@ -700,7 +673,6 @@ public class CrosswayController {
                     Messages.format("error.export.message", ex.getMessage())
             );
         }
-
     }
 
     /**
@@ -708,22 +680,14 @@ public class CrosswayController {
      * significant game state change (e.g., import or restart).
      */
     private void rebuildAfterGameChange() {
-        // Create a new BoardView bound to the new game model.
-        BoardView newView = new BoardView(this.game.getBoard());
-
         // Detach old listeners to prevent them from firing on the new view.
         detachBoardMouseHandlers();
 
-        // Swap the views within the split pane.
-        if (splitPane != null) {
-            splitPane.setLeftComponent(newView);
-        } else {
-            frame.getContentPane().remove(view);
-            frame.add(newView, BorderLayout.CENTER);
-        }
+        // Replace the board view with one bound to the new game model.
+        splitPane.replaceBoard(this.game.getBoard());
 
         // Update the reference to the new view and re-attach handlers.
-        this.view = newView;
+        this.view = splitPane.getBoardView();
         attachBoardMouseHandler();
 
         // Sync history and UI display.
@@ -731,12 +695,10 @@ public class CrosswayController {
 
         // Pack the frame and maintain the divider's position.
         frame.pack();
-        if (splitPane != null) {
-            if (historyView.isHistoryVisible()) {
-                splitPane.setDividerLocation(view.getPreferredSize().width);
-            } else {
-                splitPane.setDividerLocation(splitPane.getWidth());
-            }
+        if (splitPane.isHistoryVisible()) {
+            splitPane.setDividerLocation(view.getPreferredSize().width);
+        } else {
+            splitPane.setDividerLocation(splitPane.getWidth());
         }
         refreshWindow();
     }
@@ -778,7 +740,7 @@ public class CrosswayController {
     /**
      * Handles the request to exit the application.
      */
-    private void handleExitRequest() {
+    public void handleExitRequest() {
         System.exit(0);
     }
 }

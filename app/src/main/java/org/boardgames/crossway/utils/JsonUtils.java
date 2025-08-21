@@ -3,6 +3,8 @@ package org.boardgames.crossway.utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import java.io.File;
+
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
 /**
@@ -16,6 +18,8 @@ import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKN
  * @author Gabriele Pintus
  */
 public final class JsonUtils {
+
+    public final static String JSON_EXT = Settings.get("files.defaultExtension");
 
     /**
      * The Jackson ObjectMapper instance used for all serialization and deserialization operations.
@@ -62,4 +66,18 @@ public final class JsonUtils {
             throw new RuntimeException("Failed to deserialize JSON to object of class " + clazz.getName(), e);
         }
     }
+
+    /**
+     * Ensures that a file has the correct JSON extension.
+     *
+     * @param file The file to check.
+     * @return A {@link File} object with the proper extension.
+     */
+    public static File ensureJsonExtension(File file) {
+            String name = file.getName().toLowerCase();
+            if (!name.endsWith("." + JSON_EXT)) {
+                return new File(file.getParentFile(), file.getName() + "." + JSON_EXT);
+            }
+            return file;
+        }
 }
