@@ -60,10 +60,6 @@ public class CrosswayController {
     /** The default index for board size selection, corresponding to "Regular". */
     private static final int DEFAULT_SIZE_INDEX = Integer.parseInt(Settings.get("board.defaultSizeIndex"));
 
-    /** The file extension used for saving and loading game files. */
-//    private static final String JSON_EXT = "json";
-//    private static final String JSON_EXT = Settings.get("files.defaultExtension");
-
     // ==================== State ====================
 
     /** The core game model that contains the board, history, and rules. */
@@ -76,7 +72,6 @@ public class CrosswayController {
     private HistoryView historyView;
 
     /** The split pane that separates the board view from the history view. */
-//    private JSplitPane splitPane;
     private BoardHistorySplitPane splitPane;
 
     /** The main application window. */
@@ -138,8 +133,6 @@ public class CrosswayController {
      */
     private void initializeComponents() {
         game = new Game(new BoardSize(boardSize));
-//        view = new BoardView(game.getBoard());
-//        historyView = new HistoryView();
         splitPane = new BoardHistorySplitPane(new BoardView(game.getBoard()));
         view = splitPane.getBoardView();
         historyView = splitPane.getHistoryView();
@@ -168,7 +161,7 @@ public class CrosswayController {
     private void configureWindowProperties() {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(true);
-        frame.setJMenuBar(createApplicationMenuBar());
+        frame.setJMenuBar(MenuBarFactory.createMenuBar(this));
     }
 
     /**
@@ -177,11 +170,6 @@ public class CrosswayController {
     private void installCenterContent() {
         frame.getContentPane().removeAll();
         frame.setLayout(new BorderLayout());
-
-//        splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, view, historyView);
-//        splitPane.setResizeWeight(0.0);
-//        splitPane.setContinuousLayout(true);
-//        splitPane.setOneTouchExpandable(false);
 
         frame.add(splitPane, BorderLayout.CENTER);
         frame.pack();
@@ -201,62 +189,6 @@ public class CrosswayController {
     // ==================== Menu Bar ====================
 
     /**
-     * Creates the application's menu bar with all its menus and buttons.
-     *
-     * @return A configured {@link JMenuBar} instance.
-     */
-    private JMenuBar createApplicationMenuBar() {
-        JMenuBar menuBar = new JMenuBar();
-        addLeftAlignedMenus(menuBar);
-        menuBar.add(Box.createHorizontalGlue());
-        addRightAlignedButtons(menuBar);
-        return menuBar;
-    }
-
-    /**
-     * Adds the "File", "View", and "Game" menus to the left side of the menu bar.
-     *
-     * @param menuBar The menu bar to add menus to.
-     */
-    private void addLeftAlignedMenus(JMenuBar menuBar) {
-        menuBar.add(createFileMenu());
-        menuBar.add(createViewMenu());
-        menuBar.add(createGameMenu());
-    }
-
-    /**
-     * Creates the "File" menu with options for import, export, and exit.
-     *
-     * @return The configured "File" menu.
-     */
-    private JMenu createFileMenu() {
-        JMenu fileMenu = new JMenu(Messages.get("menu.file"));
-        // Language submenu
-        fileMenu.add(createLanguageSubmenu());
-        fileMenu.addSeparator();
-        fileMenu.add(createMenuItem(Messages.get("menu.file.import"), this::handleImportRequest));
-        fileMenu.add(createMenuItem(Messages.get("menu.file.export"), this::handleExportRequest));
-        fileMenu.addSeparator();
-        fileMenu.add(createMenuItem(Messages.get("menu.file.exit"), this::handleExitRequest));
-        return fileMenu;
-    }
-
-    /**
-     * Creates the language selection submenu.
-     *
-     * @return The configured language submenu.
-     */
-    private JMenu createLanguageSubmenu() {
-        JMenu languageMenu = new JMenu(Messages.get("menu.file.language"));
-
-        languageMenu.add(createMenuItem(Messages.get("menu.lang.en"), () -> handleLanguageChange(Locale.forLanguageTag("en-US"))));
-        languageMenu.add(createMenuItem(Messages.get("menu.lang.it"), () -> handleLanguageChange(Locale.forLanguageTag("it-IT"))));
-        languageMenu.add(createMenuItem(Messages.get("menu.lang.de"), () -> handleLanguageChange(Locale.forLanguageTag("de-DE"))));
-
-        return languageMenu;
-    }
-
-    /**
      * Handles the request to switch the application's language.
      * This method updates the locale and refreshes the UI.
      *
@@ -267,7 +199,7 @@ public class CrosswayController {
         Messages.setLocale(newLocale);
 
         // Recreate the menu bar with updated text
-        frame.setJMenuBar(createApplicationMenuBar());
+        frame.setJMenuBar(MenuBarFactory.createMenuBar(this));
 
         // Update history view language
         historyView.updateLanguage();
@@ -278,64 +210,6 @@ public class CrosswayController {
     }
 
 
-    /**
-     * Creates the "View" menu with options to toggle history visibility.
-     *
-     * @return The configured "View" menu.
-     */
-    private JMenu createViewMenu() {
-        JMenu viewMenu = new JMenu(Messages.get("menu.view"));
-        viewMenu.add(createMenuItem(Messages.get("menu.view.showHistory"), this::handleShowHistoryRequest));
-        return viewMenu;
-    }
-
-    /**
-     * Creates the "Game" menu with options for new game, restart, undo, and redo.
-     *
-     * @return The configured "Game" menu.
-     */
-    private JMenu createGameMenu() {
-        JMenu gameMenu = new JMenu(Messages.get("menu.game"));
-        gameMenu.add(createMenuItem(Messages.get("menu.game.new"), this::handleNewGameRequest));
-        gameMenu.add(createMenuItem(Messages.get("menu.game.restart"), this::handleRestartRequest));
-        return gameMenu;
-    }
-
-    /**
-     * A utility method to create a menu item with a specified text and action.
-     *
-     * @param text   The label for the menu item.
-     * @param action The action to be performed when the item is clicked.
-     * @return The created {@link JMenuItem}.
-     */
-    private JMenuItem createMenuItem(String text, Runnable action) {
-        JMenuItem item = new JMenuItem(text);
-        item.addActionListener(e -> action.run());
-        return item;
-    }
-
-    /**
-     * Adds right-aligned buttons to the menu bar for quick access to actions.
-     *
-     * @param menuBar The menu bar to add buttons to.
-     */
-    private void addRightAlignedButtons(JMenuBar menuBar) {
-        menuBar.add(createToolbarButton(Messages.get("menu.toolbar.undo"), this::handleUndoRequest));
-        menuBar.add(createToolbarButton(Messages.get("menu.toolbar.redo"), this::handleRedoRequest));
-    }
-
-    /**
-     * Creates a button styled for the menu bar's right side.
-     *
-     * @param label  The text to display on the button.
-     * @param action The action to execute on a click.
-     * @return A configured {@link JButton}.
-     */
-    private JButton createToolbarButton(String label, Runnable action) {
-        JButton btn = new JButton(label);
-        btn.addActionListener(e -> action.run());
-        return btn;
-    }
 
     // ==================== Event Handling ====================
 
@@ -384,7 +258,7 @@ public class CrosswayController {
         Stone currentPlayer = game.getCurrentPlayer();
 
         if (attemptMoveExecution(boardCoordinate, currentPlayer)) {
-            refreshBoardDisplay();
+            splitPane.repaintBoard();
             checkForGameCompletion(currentPlayer);
         }
     }
@@ -547,13 +421,6 @@ public class CrosswayController {
     }
 
     /**
-     * Repaints the board view to reflect the latest game state.
-     */
-    private void refreshBoardDisplay() {
-        view.repaint();
-    }
-
-    /**
      * Revalidates and repaints the entire window.
      */
     private void refreshWindow() {
@@ -569,7 +436,7 @@ public class CrosswayController {
     public void handleUndoRequest() {
         try {
             game.undoLastMove();
-            refreshBoardDisplay();
+            splitPane.repaintBoard();
             updateHistoryDisplay();
         } catch (IllegalStateException ex) {
             showInfo(
@@ -585,7 +452,7 @@ public class CrosswayController {
     public void handleRedoRequest() {
         try {
             game.redoLastMove();
-            refreshBoardDisplay();
+            splitPane.repaintBoard();
             updateHistoryDisplay();
         } catch (IllegalStateException ex) {
             showInfo(
@@ -695,11 +562,11 @@ public class CrosswayController {
 
         // Pack the frame and maintain the divider's position.
         frame.pack();
-        if (splitPane.isHistoryVisible()) {
-            splitPane.setDividerLocation(view.getPreferredSize().width);
-        } else {
-            splitPane.setDividerLocation(splitPane.getWidth());
-        }
+//        if (splitPane.isHistoryVisible()) {
+//            splitPane.setDividerLocation(view.getPreferredSize().width);
+//        } else {
+//            splitPane.setDividerLocation(splitPane.getWidth());
+//        }
         refreshWindow();
     }
 

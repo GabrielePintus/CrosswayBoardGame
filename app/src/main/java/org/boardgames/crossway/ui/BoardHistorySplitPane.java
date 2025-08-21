@@ -2,15 +2,10 @@ package org.boardgames.crossway.ui;
 
 
 import org.boardgames.crossway.model.Board;
-import org.boardgames.crossway.utils.Messages;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.util.Objects;
-import java.util.prefs.Preferences;
 
 public class BoardHistorySplitPane extends JSplitPane {
 
@@ -22,9 +17,6 @@ public class BoardHistorySplitPane extends JSplitPane {
         super(JSplitPane.HORIZONTAL_SPLIT, boardView, historyView);
         this.boardView = Objects.requireNonNull(boardView);
         this.historyView = Objects.requireNonNull(historyView);
-
-        setLeftComponent(boardView);
-        setRightComponent(historyView);
 
         setResizeWeight(0.5);
         setContinuousLayout(true);
@@ -91,6 +83,19 @@ public class BoardHistorySplitPane extends JSplitPane {
         revalidate();
         repaint();
     }
+
+
+    public void repaintHistory() {
+        historyView.repaint();
+    }
+    public void repaintBoard() {
+        boardView.repaint();
+    }
+    public void repaintAll() {
+        boardView.repaint();
+        historyView.repaint();
+    }
+
 
 
 
