@@ -4,6 +4,7 @@ import org.boardgames.crossway.model.*;
 import org.boardgames.crossway.model.Point;
 import org.boardgames.crossway.ui.BoardView;
 import org.boardgames.crossway.ui.HistoryView;
+import org.boardgames.crossway.utils.GameSerializer;
 import org.boardgames.crossway.utils.Messages;
 import org.boardgames.crossway.utils.Settings;
 
@@ -671,13 +672,7 @@ public class CrosswayController {
      */
     private void executeGameImport(File targetFile) {
         try {
-            if (!targetFile.exists() || !targetFile.canRead()) {
-                throw new IllegalArgumentException(
-                        Messages.format("error.open.title", targetFile.getAbsolutePath())
-                );
-            }
-            String gameData = Files.readString(targetFile.toPath());
-            this.game = Game.fromJson(gameData);
+            this.game = GameSerializer.load(targetFile);
             rebuildAfterGameChange();
         } catch (Exception ex) {
             showError(
@@ -694,8 +689,7 @@ public class CrosswayController {
      */
     private void executeGameExport(File targetFile) {
         try {
-            String gameData = game.toJson();
-            Files.writeString(targetFile.toPath(), gameData);
+            GameSerializer.save(game, targetFile);
             showInfo(
                     Messages.get("export.success.title"),
                     Messages.format("export.success.message", targetFile.getName())
