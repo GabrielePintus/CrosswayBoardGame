@@ -135,7 +135,12 @@ public class CrosswayController {
      */
     private void initializeComponents() {
         game = new Game(new BoardSize(boardSize));
-        splitPane = new BoardHistorySplitPane(new BoardView(game.getBoard()));
+        Board board = game.getBoard();
+        if (splitPane == null) {
+            splitPane = new BoardHistorySplitPane(new BoardView(board));
+        } else {
+            splitPane.replaceBoard(board);
+        }
         view = splitPane.getBoardView();
         historyView = splitPane.getHistoryView();
     }

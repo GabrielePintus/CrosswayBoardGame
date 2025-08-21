@@ -1,14 +1,11 @@
 package org.boardgames.crossway.model;
 
 import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.boardgames.crossway.model.rules.*;
 import org.boardgames.crossway.utils.JsonUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Stack;
 
 /**
  * Core game logic implementation for the Crossway board game.
@@ -50,7 +47,7 @@ public class Game {
     @JsonIgnore // rebuilt from board when loading
     private final PatternChecker patternChecker;
     @JsonIgnore // rebuilt from board when loading
-    private final Connectivity connectivity;
+    private ConnectionChecker connectionChecker;
     private final History history;
 
     // ========== Game State ==========
@@ -75,8 +72,7 @@ public class Game {
 
         this.board = board;
         this.patternChecker = createDefaultPatternChecker();
-        this.connectivity = new Connectivity(board);
-        this.connectivity.initFromBoard(board);
+        this.connectionChecker = new ConnectionChecker(board);
         this.history = new History();
         this.currentPlayer = DEFAULT_STARTING_PLAYER;
     }
@@ -123,8 +119,6 @@ public class Game {
 
         // Rebuild transient components that are not part of the JSON.
         this.patternChecker = createDefaultPatternChecker();
-        this.connectivity = new Connectivity(board);
-        this.connectivity.initFromBoard(board);
     }
 
     // ========== Initialization Methods ==========
@@ -171,27 +165,6 @@ public class Game {
     // ========== Placement ==========
 
     /**
-     * Places a stone at the specified point and updates the game's state.
-     *
-     * <p>This is a low-level method that updates the board and the connectivity
-     * data structure. It also creates a checkpoint in the connectivity tracker
-     * for potential undo operations.</p>
-     *
-     * @param point The position to place the stone.
-     * @param stone The stone to place.
-     */
-    private void place(Point point, Stone stone) {
-        // Create a checkpoint for a potential undo operation.
-        connectivity.checkpoint();
-
-        // Update the board state.
-        board.placeStone(point, stone);
-
-        // Update connectivity information based on the new stone.
-        connectivity.onPlace(point, stone);
-    }
-
-    /**
      * Attempts to make a move in the game.
      *
      * <p>This is the primary method for game progression. It first validates
@@ -209,7 +182,7 @@ public class Game {
         }
 
         // Execute the move by placing the stone and updating connectivity.
-        place(move.getPoint(), move.getStone());
+        board.placeStone(move.getPoint(), move.getStone());
 
         // Record the move in the history.
         history.commit(move);
@@ -244,7 +217,7 @@ public class Game {
         board.clearCell(lastMove.getPoint());
 
         // Restore the connectivity state to the previous step.
-        connectivity.rollback();
+//        connectivity.rollback();
 
         // The current player becomes the one who just had their move undone.
         currentPlayer = lastMove.getStone();
@@ -275,7 +248,7 @@ public class Game {
         }
 
         // Re-apply the move. The history update is already handled by history.redo().
-        place(move.getPoint(), move.getStone()); // creates checkpoint, updates board & connectivity
+        board.placeStone(move.getPoint(), move.getStone());
         currentPlayer = currentPlayer.opposite();
     }
 
@@ -336,7 +309,7 @@ public class Game {
      * @return {@code true} if the specified color has won, {@code false} otherwise.
      */
     public boolean hasWon(Stone stone) {
-        return connectivity.hasWon(stone);
+        return connectionChecker.hasWon(stone);
     }
 
     // ========== Game Export ==========
