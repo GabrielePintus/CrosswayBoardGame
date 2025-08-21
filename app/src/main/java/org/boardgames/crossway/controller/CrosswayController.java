@@ -80,6 +80,8 @@ public class CrosswayController {
     /** The current dimension of the square board. */
     private int boardSize;
 
+    private final DialogHandler dialogHandler;
+
     // ==================== Constructors ====================
 
     /**
@@ -107,10 +109,10 @@ public class CrosswayController {
     public CrosswayController(int boardSize) {
         validateBoardSize(boardSize);
         this.boardSize = boardSize;
-
         initializeComponents();
         setupUserInterface();
         attachEventHandlers();
+        this.dialogHandler = new DialogHandler(frame);
     }
 
     // ==================== Initialization ====================
@@ -289,7 +291,7 @@ public class CrosswayController {
             updateHistoryDisplay();
             return true;
         } catch (IllegalArgumentException ex) {
-            showWarning(Messages.get("error.invalidMove"), ex.getMessage());
+            dialogHandler.showWarning(Messages.get("error.invalidMove"), ex.getMessage());
             return false;
         }
     }
@@ -439,7 +441,7 @@ public class CrosswayController {
             splitPane.repaintBoard();
             updateHistoryDisplay();
         } catch (IllegalStateException ex) {
-            showInfo(
+            dialogHandler.showInfo(
                     Messages.get("menu.toolbar.undo"),
                     Messages.get("warning.toolbar.undo")
             );
@@ -455,7 +457,7 @@ public class CrosswayController {
             splitPane.repaintBoard();
             updateHistoryDisplay();
         } catch (IllegalStateException ex) {
-            showInfo(
+            dialogHandler.showInfo(
                     Messages.get("menu.toolbar.redo"),
                     Messages.get("warning.toolbar.redo")
             );
@@ -515,7 +517,7 @@ public class CrosswayController {
             this.game = GameSerializer.load(targetFile);
             rebuildAfterGameChange();
         } catch (Exception ex) {
-            showError(
+            dialogHandler.showError(
                     Messages.get("error.import.title"),
                     Messages.format("error.import.message", ex.getMessage())
             );
@@ -530,12 +532,12 @@ public class CrosswayController {
     private void executeGameExport(File targetFile) {
         try {
             GameSerializer.save(game, targetFile);
-            showInfo(
+            dialogHandler.showInfo(
                     Messages.get("export.success.title"),
                     Messages.format("export.success.message", targetFile.getName())
             );
         } catch (Exception ex) {
-            showError(
+            dialogHandler.showError(
                     Messages.get("error.export.title"),
                     Messages.format("error.export.message", ex.getMessage())
             );
@@ -572,35 +574,11 @@ public class CrosswayController {
 
     // ==================== Dialog Helpers ====================
 
-    /**
-     * Displays a warning dialog to the user.
-     *
-     * @param title   The title of the dialog.
-     * @param message The message to display.
-     */
-    private void showWarning(String title, String message) {
-        JOptionPane.showMessageDialog(frame, message, title, JOptionPane.WARNING_MESSAGE);
-    }
 
-    /**
-     * Displays an informational dialog to the user.
-     *
-     * @param title   The title of the dialog.
-     * @param message The message to display.
-     */
-    private void showInfo(String title, String message) {
-        JOptionPane.showMessageDialog(frame, message, title, JOptionPane.INFORMATION_MESSAGE);
-    }
 
-    /**
-     * Displays an error dialog to the user.
-     *
-     * @param title   The title of the dialog.
-     * @param message The message to display.
-     */
-    private void showError(String title, String message) {
-        JOptionPane.showMessageDialog(frame, message, title, JOptionPane.ERROR_MESSAGE);
-    }
+
+
+
 
     // ==================== Exit ====================
 
