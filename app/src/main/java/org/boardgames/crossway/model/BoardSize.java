@@ -16,11 +16,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public record BoardSize(int size) {
 
     /**
-     * Tiny board size, representing a 5x5 board.
-     */
-    public static final BoardSize TINY = new BoardSize(5);
-
-    /**
      * Small board size, representing a 9x9 board.
      */
     public static final BoardSize SMALL = new BoardSize(9);

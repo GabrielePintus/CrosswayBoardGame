@@ -4,6 +4,8 @@ import org.boardgames.crossway.model.*;
 import org.boardgames.crossway.model.Point;
 import org.boardgames.crossway.ui.BoardView;
 import org.boardgames.crossway.ui.HistoryView;
+import org.boardgames.crossway.utils.Messages;
+import org.boardgames.crossway.utils.Settings;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -13,6 +15,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * The main controller for the Crossway board game application, coordinating
@@ -34,33 +37,31 @@ import java.util.List;
  * </ul>
  *
  * @author Gabriele Pintus
- * @author The Crossway Development Team
- * @version 1.1
- * @since 1.0
  */
 public class CrosswayController {
 
     // ==================== Constants ====================
 
     /** The title displayed in the main application window. */
-    private static final String WINDOW_TITLE = "Crossway";
+    private static final String WINDOW_TITLE = Settings.get("app.name");
 
     /** Predefined board size options presented to the user. */
-    private static final String[] BOARD_SIZE_OPTIONS = {
-            "Tiny (5x5)", "Small (9x9)", "Regular (19x19)", "Large (25x25)"
-    };
+    private static final String[] BOARD_SIZE_OPTIONS = Messages.getPrefixedArray("menu.game.boardSize");
+
 
     /** Options presented in the win dialog after a game ends. */
-    private static final String[] WIN_DIALOG_OPTIONS = { "New Game", "Restart", "Exit" };
+    private static final String[] WIN_DIALOG_OPTIONS = {
+            Messages.get("menu.game.new"),
+            Messages.get("menu.game.restart"),
+            Messages.get("menu.file.exit")
+    };
 
     /** The default index for board size selection, corresponding to "Regular". */
-    private static final int DEFAULT_SIZE_INDEX = 2;
-
-    /** The exact size for the "Tiny" board option. */
-    private static final int TINY_BOARD_SIZE = 5;
+    private static final int DEFAULT_SIZE_INDEX = Integer.parseInt(Settings.get("board.defaultSizeIndex"));
 
     /** The file extension used for saving and loading game files. */
-    private static final String JSON_EXT = "json";
+//    private static final String JSON_EXT = "json";
+    private static final String JSON_EXT = Settings.get("files.defaultExtension");
 
     // ==================== State ====================
 
@@ -125,7 +126,7 @@ public class CrosswayController {
      */
     private void validateBoardSize(int size) {
         if (size < 3) {
-            throw new IllegalArgumentException("Board size must be at least 3x3");
+            throw new IllegalArgumentException(Messages.get("error.invalidBoardSize"));
         }
     }
 
@@ -224,12 +225,53 @@ public class CrosswayController {
      * @return The configured "File" menu.
      */
     private JMenu createFileMenu() {
-        JMenu fileMenu = new JMenu("File");
-        fileMenu.add(createMenuItem("Import Game", this::handleImportRequest));
-        fileMenu.add(createMenuItem("Export Game", this::handleExportRequest));
-        fileMenu.add(createMenuItem("Exit", this::handleExitRequest));
+        JMenu fileMenu = new JMenu(Messages.get("menu.file"));
+        // Language submenu
+        fileMenu.add(createLanguageSubmenu());
+        fileMenu.addSeparator();
+        fileMenu.add(createMenuItem(Messages.get("menu.file.import"), this::handleImportRequest));
+        fileMenu.add(createMenuItem(Messages.get("menu.file.export"), this::handleExportRequest));
+        fileMenu.addSeparator();
+        fileMenu.add(createMenuItem(Messages.get("menu.file.exit"), this::handleExitRequest));
         return fileMenu;
     }
+
+    /**
+     * Creates the language selection submenu.
+     *
+     * @return The configured language submenu.
+     */
+    private JMenu createLanguageSubmenu() {
+        JMenu languageMenu = new JMenu(Messages.get("menu.file.language"));
+
+        languageMenu.add(createMenuItem(Messages.get("menu.lang.en"), () -> handleLanguageChange(Locale.forLanguageTag("en-US"))));
+        languageMenu.add(createMenuItem(Messages.get("menu.lang.it"), () -> handleLanguageChange(Locale.forLanguageTag("it-IT"))));
+        languageMenu.add(createMenuItem(Messages.get("menu.lang.de"), () -> handleLanguageChange(Locale.forLanguageTag("de-DE"))));
+
+        return languageMenu;
+    }
+
+    /**
+     * Handles the request to switch the application's language.
+     * This method updates the locale and refreshes the UI.
+     *
+     * @param newLocale The new locale to switch to
+     */
+    private void handleLanguageChange(Locale newLocale) {
+        // Update the Messages locale
+        Messages.setLocale(newLocale);
+
+        // Recreate the menu bar with updated text
+        frame.setJMenuBar(createApplicationMenuBar());
+
+        // Update history view language
+        historyView.updateLanguage();
+
+        // Refresh the entire window to reflect language changes
+        frame.revalidate();
+        frame.repaint();
+    }
+
 
     /**
      * Creates the "View" menu with options to toggle history visibility.
@@ -237,8 +279,8 @@ public class CrosswayController {
      * @return The configured "View" menu.
      */
     private JMenu createViewMenu() {
-        JMenu viewMenu = new JMenu("View");
-        viewMenu.add(createMenuItem("Show History", this::handleShowHistoryRequest));
+        JMenu viewMenu = new JMenu(Messages.get("menu.view"));
+        viewMenu.add(createMenuItem(Messages.get("menu.view.showHistory"), this::handleShowHistoryRequest));
         return viewMenu;
     }
 
@@ -248,9 +290,9 @@ public class CrosswayController {
      * @return The configured "Game" menu.
      */
     private JMenu createGameMenu() {
-        JMenu gameMenu = new JMenu("Game");
-        gameMenu.add(createMenuItem("New Game", this::handleNewGameRequest));
-        gameMenu.add(createMenuItem("Restart", this::handleRestartRequest));
+        JMenu gameMenu = new JMenu(Messages.get("menu.game"));
+        gameMenu.add(createMenuItem(Messages.get("menu.game.new"), this::handleNewGameRequest));
+        gameMenu.add(createMenuItem(Messages.get("menu.game.restart"), this::handleRestartRequest));
         return gameMenu;
     }
 
@@ -273,8 +315,8 @@ public class CrosswayController {
      * @param menuBar The menu bar to add buttons to.
      */
     private void addRightAlignedButtons(JMenuBar menuBar) {
-        menuBar.add(createToolbarButton("Undo", this::handleUndoRequest));
-        menuBar.add(createToolbarButton("Redo", this::handleRedoRequest));
+        menuBar.add(createToolbarButton(Messages.get("menu.toolbar.undo"), this::handleUndoRequest));
+        menuBar.add(createToolbarButton(Messages.get("menu.toolbar.redo"), this::handleRedoRequest));
     }
 
     /**
@@ -368,7 +410,7 @@ public class CrosswayController {
             updateHistoryDisplay();
             return true;
         } catch (IllegalArgumentException ex) {
-            showWarning("Invalid Move", ex.getMessage());
+            showWarning(Messages.get("error.invalidMove"), ex.getMessage());
             return false;
         }
     }
@@ -382,8 +424,8 @@ public class CrosswayController {
         if (game.hasWon(currentPlayer)) {
             int choice = JOptionPane.showOptionDialog(
                     frame,
-                    currentPlayer + " wins!",
-                    "Game Over",
+                    currentPlayer + Messages.get("game.wins"),
+                    Messages.get("game.over"),
                     JOptionPane.DEFAULT_OPTION,
                     JOptionPane.INFORMATION_MESSAGE,
                     null,
@@ -436,7 +478,7 @@ public class CrosswayController {
         // Update the menu item text to reflect the new state.
         JMenu viewMenu = frame.getJMenuBar().getMenu(1);
         JMenuItem historyItem = viewMenu.getItem(0);
-        historyItem.setText(historyView.isHistoryVisible() ? "Hide History" : "Show History");
+        historyItem.setText(historyView.isHistoryVisible() ? Messages.get("menu.view.hideHistory") : Messages.get("menu.view.showHistory"));
     }
 
     /**
@@ -458,8 +500,8 @@ public class CrosswayController {
     private int promptForBoardSize() {
         return JOptionPane.showOptionDialog(
                 frame,
-                "Select board size:",
-                "New Game",
+                Messages.get("menu.game.selectBoardSize"),
+                Messages.get("menu.game.new"),
                 JOptionPane.DEFAULT_OPTION,
                 JOptionPane.QUESTION_MESSAGE,
                 null,
@@ -485,10 +527,9 @@ public class CrosswayController {
      */
     private void updateBoardSizeFromSelection(int selectionIndex) {
         boardSize = switch (selectionIndex) {
-            case 0 -> TINY_BOARD_SIZE;
-            case 1 -> BoardSize.SMALL.size();
-            case 2 -> BoardSize.REGULAR.size();
-            case 3 -> BoardSize.LARGE.size();
+            case 0 -> BoardSize.SMALL.size();
+            case 1 -> BoardSize.REGULAR.size();
+            case 2 -> BoardSize.LARGE.size();
             default -> BoardSize.REGULAR.size();
         };
     }
@@ -543,7 +584,10 @@ public class CrosswayController {
             refreshBoardDisplay();
             updateHistoryDisplay();
         } catch (IllegalStateException ex) {
-            showInfo("Undo", "No moves available to undo.");
+            showInfo(
+                    Messages.get("menu.toolbar.undo"),
+                    Messages.get("warning.toolbar.undo")
+            );
         }
     }
 
@@ -556,7 +600,10 @@ public class CrosswayController {
             refreshBoardDisplay();
             updateHistoryDisplay();
         } catch (IllegalStateException ex) {
-            showInfo("Redo", "No moves available to redo.");
+            showInfo(
+                    Messages.get("menu.toolbar.redo"),
+                    Messages.get("warning.toolbar.redo")
+            );
         }
     }
 
@@ -566,13 +613,11 @@ public class CrosswayController {
      * Prompts the user to save the current game state to a JSON file.
      */
     private void handleExportRequest() {
-        JFileChooser chooser = createJsonFileChooser("Export Game");
+        JFileChooser chooser = createJsonFileChooser(Messages.get("menu.file.export"));
         int choice = chooser.showSaveDialog(frame);
         if (choice == JFileChooser.APPROVE_OPTION) {
             File selectedFile = chooser.getSelectedFile();
             executeGameExport(ensureJsonExtension(selectedFile));
-        } else {
-            showInfo("Export Cancelled", "Export cancelled.");
         }
     }
 
@@ -580,13 +625,11 @@ public class CrosswayController {
      * Prompts the user to load a game state from a JSON file.
      */
     private void handleImportRequest() {
-        JFileChooser chooser = createJsonFileChooser("Import Game");
+        JFileChooser chooser = createJsonFileChooser(Messages.get("menu.file.import"));
         int choice = chooser.showOpenDialog(frame);
         if (choice == JFileChooser.APPROVE_OPTION) {
             File selectedFile = chooser.getSelectedFile();
             executeGameImport(selectedFile);
-        } else {
-            showInfo("Import Cancelled", "Import cancelled.");
         }
     }
 
@@ -600,7 +643,9 @@ public class CrosswayController {
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle(title);
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("JSON Files (*.json)", JSON_EXT);
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(
+                Messages.get("file.filter.json"), JSON_EXT
+        );
         chooser.setFileFilter(filter);
         return chooser;
     }
@@ -627,13 +672,18 @@ public class CrosswayController {
     private void executeGameImport(File targetFile) {
         try {
             if (!targetFile.exists() || !targetFile.canRead()) {
-                throw new IllegalArgumentException("Cannot read file: " + targetFile.getAbsolutePath());
+                throw new IllegalArgumentException(
+                        Messages.format("error.open.title", targetFile.getAbsolutePath())
+                );
             }
             String gameData = Files.readString(targetFile.toPath());
             this.game = Game.fromJson(gameData);
             rebuildAfterGameChange();
         } catch (Exception ex) {
-            showError("Import Error", "Failed to import game: " + ex.getMessage());
+            showError(
+                    Messages.get("error.import.title"),
+                    Messages.format("error.import.message", ex.getMessage())
+            );
         }
     }
 
@@ -646,10 +696,17 @@ public class CrosswayController {
         try {
             String gameData = game.toJson();
             Files.writeString(targetFile.toPath(), gameData);
-            showInfo("Export Successful", "Game exported to: " + targetFile.getAbsolutePath());
+            showInfo(
+                    Messages.get("export.success.title"),
+                    Messages.format("export.success.message", targetFile.getName())
+            );
         } catch (Exception ex) {
-            showError("Export Error", "Failed to export game: " + ex.getMessage());
+            showError(
+                    Messages.get("error.export.title"),
+                    Messages.format("error.export.message", ex.getMessage())
+            );
         }
+
     }
 
     /**

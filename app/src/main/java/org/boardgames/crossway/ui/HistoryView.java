@@ -2,6 +2,7 @@ package org.boardgames.crossway.ui;
 
 import org.boardgames.crossway.model.Move;
 import org.boardgames.crossway.model.Stone;
+import org.boardgames.crossway.utils.Messages;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,6 +17,7 @@ public class HistoryView extends JPanel {
     public static final int MIN_WIDTH = 200;
 
     private final JList<String> moveList;
+    private final JLabel titleLabel; // Keep reference to update language
     private final DefaultListModel<String> listModel;
     private boolean isVisible = false;
 
@@ -25,7 +27,8 @@ public class HistoryView extends JPanel {
         // Title panel
         JPanel titlePanel = new JPanel(new BorderLayout());
         titlePanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        titlePanel.add(new JLabel("Move History"), BorderLayout.CENTER);
+        titleLabel = new JLabel(Messages.get("history.title"));
+        titlePanel.add(titleLabel, BorderLayout.CENTER);
 
         // Move list
         listModel = new DefaultListModel<>();
@@ -87,8 +90,15 @@ public class HistoryView extends JPanel {
         }
 
         // Auto-scroll to bottom
-        if (!listModel.isEmpty()) {
-            moveList.ensureIndexIsVisible(listModel.getSize() - 1);
-        }
+        if (!listModel.isEmpty()) moveList.ensureIndexIsVisible(listModel.getSize() - 1);
+    }
+
+    /**
+     * Updates the UI text for language changes.
+     * Should be called after Messages.setLocale().
+     */
+    public void updateLanguage() {
+        titleLabel.setText(Messages.get("history.title"));
+        repaint();
     }
 }
