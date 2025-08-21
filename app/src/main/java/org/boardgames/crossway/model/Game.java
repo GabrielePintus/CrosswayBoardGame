@@ -269,7 +269,7 @@ public class Game {
             throw new IllegalStateException("No moves available to redo");
         }
 
-        // Sanity check to ensure the target cell is empty before re-placing.
+        // Check to ensure the target cell is empty before re-placing.
         if (board.stoneAt(move.getPoint()).isPresent()) {
             throw new IllegalStateException("Redo invariant violated: target cell is not empty");
         }

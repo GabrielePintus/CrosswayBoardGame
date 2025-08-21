@@ -564,20 +564,9 @@ public class CrosswayController {
 
         // Pack the frame and maintain the divider's position.
         frame.pack();
-//        if (splitPane.isHistoryVisible()) {
-//            splitPane.setDividerLocation(view.getPreferredSize().width);
-//        } else {
-//            splitPane.setDividerLocation(splitPane.getWidth());
-//        }
+
         refreshWindow();
     }
-
-    // ==================== Dialog Helpers ====================
-
-
-
-
-
 
 
     // ==================== Exit ====================

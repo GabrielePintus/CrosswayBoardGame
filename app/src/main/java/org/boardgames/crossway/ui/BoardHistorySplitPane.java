@@ -1,18 +1,34 @@
 package org.boardgames.crossway.ui;
 
-
 import org.boardgames.crossway.model.Board;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 
+/**
+ * A custom {@link JSplitPane} that contains the game board and the move history view.
+ * <p>
+ * This component manages the layout and visibility of the board and history
+ * side-by-side. It also provides methods to toggle the history view's visibility,
+ * repaint its sub-components, and replace the board view with a new one.
+ * </p>
+ *
+ * @author Gabriele Pintus
+ */
 public class BoardHistorySplitPane extends JSplitPane {
 
+    /** The view component that renders the game board. */
     private BoardView boardView;
+    /** The view component that displays the move history. */
     private HistoryView historyView;
 
-
+    /**
+     * Constructs a new BoardHistorySplitPane with the specified board and history views.
+     *
+     * @param boardView   The component that displays the game board.
+     * @param historyView The component that displays the move history.
+     */
     public BoardHistorySplitPane(BoardView boardView, HistoryView historyView) {
         super(JSplitPane.HORIZONTAL_SPLIT, boardView, historyView);
         this.boardView = Objects.requireNonNull(boardView);
@@ -23,10 +39,15 @@ public class BoardHistorySplitPane extends JSplitPane {
         setOneTouchExpandable(true);
     }
 
-    public BoardHistorySplitPane(BoardView boardView){
+    /**
+     * Constructs a new BoardHistorySplitPane with a specified board view and a
+     * default {@link HistoryView}.
+     *
+     * @param boardView The component that displays the game board.
+     */
+    public BoardHistorySplitPane(BoardView boardView) {
         this(boardView, new HistoryView());
     }
-
 
     /**
      * Replaces the current board view with a new one based on the provided board.
@@ -84,22 +105,25 @@ public class BoardHistorySplitPane extends JSplitPane {
         repaint();
     }
 
-
+    /**
+     * Repaints the history view to reflect any changes.
+     */
     public void repaintHistory() {
         historyView.repaint();
     }
+
+    /**
+     * Repaints the board view to reflect any changes.
+     */
     public void repaintBoard() {
         boardView.repaint();
     }
+
+    /**
+     * Repaints both the board and history views.
+     */
     public void repaintAll() {
         boardView.repaint();
         historyView.repaint();
     }
-
-
-
-
-
-
-
 }
