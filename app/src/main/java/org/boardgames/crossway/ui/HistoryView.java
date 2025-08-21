@@ -41,8 +41,8 @@ public class HistoryView extends JPanel {
         add(scrollPane, BorderLayout.CENTER);
 
         // Initial state - hidden
-        setMinimumSize(new Dimension(0, 400));
-        setPreferredSize(new Dimension(0, 400));
+        setMinimumSize(new Dimension(0, 0));
+        setPreferredSize(new Dimension(0, 0));
         setVisible(false);
     }
 
@@ -52,6 +52,16 @@ public class HistoryView extends JPanel {
      */
     public void toggleVisibility() {
         isVisible = !isVisible;
+
+        int prefHeight = getPreferredSize().height;
+        if (isVisible) {
+            setMinimumSize(new Dimension(MIN_WIDTH, 0));
+            setPreferredSize(new Dimension(MIN_WIDTH, prefHeight));
+        } else {
+            setMinimumSize(new Dimension(0, 0));
+            setPreferredSize(new Dimension(0, prefHeight));
+        }
+
         setVisible(isVisible);
 
         // Trigger parent container to revalidate

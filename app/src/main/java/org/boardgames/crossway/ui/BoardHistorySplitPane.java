@@ -34,7 +34,11 @@ public class BoardHistorySplitPane extends JSplitPane {
         this.boardView = Objects.requireNonNull(boardView);
         this.historyView = Objects.requireNonNull(historyView);
 
-        setResizeWeight(0.5);
+        int prefHeight = boardView.getPreferredSize().height;
+        historyView.setPreferredSize(new Dimension(0 , prefHeight));
+        historyView.setMinimumSize(new Dimension(0, 0));
+
+        setResizeWeight(0);
         setContinuousLayout(true);
         setOneTouchExpandable(true);
     }
@@ -57,6 +61,9 @@ public class BoardHistorySplitPane extends JSplitPane {
     public void replaceBoard(Board newBoard) {
         this.boardView = new BoardView(newBoard);
         setLeftComponent(this.boardView);
+
+        int prefHeight = boardView.getPreferredSize().height;
+        historyView.setPreferredSize(new Dimension(historyView.getPreferredSize().width, prefHeight));
     }
 
     /**

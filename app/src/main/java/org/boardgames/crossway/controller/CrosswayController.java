@@ -43,12 +43,8 @@ public class CrosswayController {
 
     // ==================== Constants ====================
 
-    /** The title displayed in the main application window. */
-    private static final String WINDOW_TITLE = Settings.get("app.name");
-
     /** Predefined board size options presented to the user. */
     private static final String[] BOARD_SIZE_OPTIONS = Messages.getPrefixedArray("menu.game.boardSize");
-
 
     /** Options presented in the win dialog after a game ends. */
     private static final String[] WIN_DIALOG_OPTIONS = {
@@ -80,6 +76,7 @@ public class CrosswayController {
     /** The current dimension of the square board. */
     private int boardSize;
 
+    /** Handler for dialog interactions, such as warnings and errors. */
     private final DialogHandler dialogHandler;
 
     // ==================== Constructors ====================
@@ -149,7 +146,7 @@ public class CrosswayController {
      * Builds and lays out the entire application's user interface.
      */
     private void setupUserInterface() {
-        JFrame frame = FrameFactory.createFrame(this);
+        frame = FrameFactory.createFrame(this);
 
         frame.add(splitPane, BorderLayout.CENTER);
         frame.pack();
@@ -193,7 +190,8 @@ public class CrosswayController {
      * Attaches all necessary event listeners to the components.
      */
     private void attachEventHandlers() {
-        attachBoardMouseHandler();
+        // Attach the mouse handler to the board view.
+        view.addMouseListener(new BoardMouseHandler());
     }
 
     /**
@@ -203,13 +201,6 @@ public class CrosswayController {
         for (var listener : view.getMouseListeners()) {
             view.removeMouseListener(listener);
         }
-    }
-
-    /**
-     * Installs a mouse listener on the board view to handle user clicks.
-     */
-    private void attachBoardMouseHandler() {
-        view.addMouseListener(new BoardMouseHandler());
     }
 
     /**
@@ -311,11 +302,20 @@ public class CrosswayController {
      * Toggles the visibility of the move history sidebar.
      */
     public void handleShowHistoryRequest() {
+        // Toggle visibility on the history view (updates min/preferred sizes)
+        historyView.toggleVisibility();
+
+        // Update the split pane's divider location based on the new visibility state.
+        if (historyView.isHistoryVisible()) showHistory();
+        else hideHistory();
+
+        // Update the split pane to reflect the new visibility state.
+        splitPane.revalidate();
+        splitPane.repaint();
+
         // Update the menu item text to reflect the new state.
         JMenu viewMenu = frame.getJMenuBar().getMenu(1);
         JMenuItem historyItem = viewMenu.getItem(0);
-        System.out.println(splitPane.isHistoryVisible());
-        splitPane.toggleHistory();
         historyItem.setText(splitPane.isHistoryVisible() ? Messages.get("menu.view.hideHistory") : Messages.get("menu.view.showHistory"));
     }
 
@@ -329,6 +329,37 @@ public class CrosswayController {
             executeGameRestart();
         }
     }
+
+
+    public void showHistory() {
+        int boardPrefWidth = splitPane.getBoardView().getPreferredSize().width;
+        int dividerSize = splitPane.getDividerSize();
+        int minHistoryWidth = HistoryView.MIN_WIDTH;
+        int minTotalWidth = boardPrefWidth + dividerSize + minHistoryWidth;
+        int currentContentWidth = splitPane.getWidth();
+
+        // If not enough space for history, resize the frame
+        if (currentContentWidth < minTotalWidth) {
+            int extraNeeded = minTotalWidth - currentContentWidth;
+            Dimension currentFrameSize = frame.getSize();
+            frame.setSize(currentFrameSize.width + extraNeeded, currentFrameSize.height);
+        }
+
+        // Set divider to board preferred width; history fills the remaining space
+        splitPane.setDividerLocation(boardPrefWidth);
+    }
+    public void hideHistory() {
+        int fullWidth = splitPane.getWidth();
+        int boardWidth = splitPane.getBoardView().getPreferredSize().width;
+
+        // When hiding, collapse by setting divider to full width
+        splitPane.setDividerLocation(fullWidth);
+
+        frame.setSize(boardWidth, frame.getHeight());
+
+    }
+
+
 
     /**
      * Prompts the user to select a board size for a new game.
@@ -523,15 +554,11 @@ public class CrosswayController {
      * significant game state change (e.g., import or restart).
      */
     private void rebuildAfterGameChange() {
-        // Detach old listeners to prevent them from firing on the new view.
-        detachBoardMouseHandlers();
-
         // Replace the board view with one bound to the new game model.
         splitPane.replaceBoard(this.game.getBoard());
 
         // Update the reference to the new view and re-attach handlers.
         this.view = splitPane.getBoardView();
-        attachBoardMouseHandler();
 
         // Sync history and UI display.
         updateHistoryDisplay();
