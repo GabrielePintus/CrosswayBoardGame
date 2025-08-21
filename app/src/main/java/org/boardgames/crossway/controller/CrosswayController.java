@@ -310,7 +310,7 @@ public class CrosswayController {
         if (game.hasWon(currentPlayer)) {
             int choice = JOptionPane.showOptionDialog(
                     frame,
-                    currentPlayer + Messages.get("game.wins"),
+                    "%s %s".formatted(currentPlayer, Messages.get("game.wins")),
                     Messages.get("game.over"),
                     JOptionPane.DEFAULT_OPTION,
                     JOptionPane.INFORMATION_MESSAGE,
