@@ -149,46 +149,15 @@ public class CrosswayController {
      * Builds and lays out the entire application's user interface.
      */
     private void setupUserInterface() {
-        createMainWindow();
-        configureWindowProperties();
-        installCenterContent();
-        displayWindow();
-    }
-
-    /**
-     * Creates the main application window.
-     */
-    private void createMainWindow() {
-        frame = new JFrame(WINDOW_TITLE);
-    }
-
-    /**
-     * Applies standard frame properties such as default close operation and menu bar.
-     */
-    private void configureWindowProperties() {
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setResizable(true);
-        frame.setJMenuBar(MenuBarFactory.createMenuBar(this));
-    }
-
-    /**
-     * Creates and installs the central split pane containing the board and history.
-     */
-    private void installCenterContent() {
-        frame.getContentPane().removeAll();
-        frame.setLayout(new BorderLayout());
+        JFrame frame = FrameFactory.createFrame(this);
 
         frame.add(splitPane, BorderLayout.CENTER);
         frame.pack();
 
         // Start with the history view hidden by default.
         splitPane.setDividerLocation(splitPane.getWidth());
-    }
 
-    /**
-     * Packs the frame and makes it visible on the screen.
-     */
-    private void displayWindow() {
+        // Set the minimum size of the frame to ensure it is usable.
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }

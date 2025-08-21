@@ -34,7 +34,7 @@ public final class ConnectionChecker {
     /**
      * An array of 8-directional offsets for checking neighboring cells.
      */
-    private static final int[][] DIR8 = {
+    private static final int[][] DIRECTIONS = {
             {-1, -1}, {-1, 0}, {-1, 1},
             {0, -1},           {0, 1},
             {1, -1}, {1, 0}, {1, 1}
@@ -116,7 +116,7 @@ public final class ConnectionChecker {
             }
 
             // Explore 8 neighbors
-            for (int[] d : DIR8) {
+            for (int[] d : DIRECTIONS) {
                 Point q = new Point(p.x() + d[0], p.y() + d[1]);
                 if (board.isOnBoard(q) && !visited.contains(q) && board.stoneAt(q).orElse(null) == s) {
                     visited.add(q);
