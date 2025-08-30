@@ -222,6 +222,15 @@ public class CrosswayController {
     private void processBoardClick(Point boardCoordinate) {
         Stone currentPlayer = game.getCurrentPlayer();
 
+        if (!game.hasLegalMove(currentPlayer)) {
+            dialogHandler.showInfo(
+                    Messages.get("game.forfeit.title"),
+                    Messages.format("game.forfeit.message", currentPlayer)
+            );
+            game.skipTurn();
+            return;
+        }
+
         if (attemptMoveExecution(boardCoordinate, currentPlayer)) {
             if (game.isPieAvailable()) {
                 promptSwapDecision();

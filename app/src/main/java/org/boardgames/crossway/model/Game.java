@@ -188,6 +188,30 @@ public class Game {
         return patternChecker.isAllowed(board, new Move(point, stone));
     }
 
+    /**
+     * Determines whether the given player has at least one legal move
+     * available on the current board.
+     *
+     * <p>The method scans every intersection of the board and delegates the
+     * validation to {@link #canPlace(Point, Stone)}. The search stops as soon
+     * as a legal placement is found.</p>
+     *
+     * @param player the player to check for available moves
+     * @return {@code true} if the player can place a stone somewhere on the
+     *         board, {@code false} otherwise
+     */
+    public boolean hasLegalMove(Stone player) {
+        int size = board.getSize().toInt();
+        for (int x = 0; x < size; x++) {
+            for (int y = 0; y < size; y++) {
+                if (canPlace(new Point(x, y), player)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     // ========== Placement ==========
 
     /**
@@ -217,6 +241,16 @@ public class Game {
         // Switch to the next player.
         currentPlayer = currentPlayer.opposite();
 
+        notifyListeners();
+    }
+
+    /**
+     * Switches the current player without modifying the board state.
+     * This is used when a player must forfeit their turn due to having
+     * no legal moves available.
+     */
+    public void skipTurn() {
+        currentPlayer = currentPlayer.opposite();
         notifyListeners();
     }
 
