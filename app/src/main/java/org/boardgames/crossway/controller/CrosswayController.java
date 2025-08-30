@@ -153,11 +153,14 @@ public class CrosswayController {
         Board board = game.getBoard();
         if (splitPane == null) {
             splitPane = new BoardHistorySplitPane(new BoardView(board));
+            view = splitPane.getBoardView();
+            historyView = splitPane.getHistoryView();
+            game.addBoardChangeListener(view);
         } else {
             splitPane.replaceBoard(board);
+            view = splitPane.getBoardView();
+            historyView = splitPane.getHistoryView();
         }
-        view = splitPane.getBoardView();
-        historyView = splitPane.getHistoryView();
     }
 
     /**
@@ -183,7 +186,7 @@ public class CrosswayController {
      * Handles the request to switch the application's language.
      * This method updates the locale and refreshes the UI.
      *
-     * @param newLocale The new locale to switch to
+     * @param newLocale The new locale to switch to.
      */
     public void handleLanguageChange(Locale newLocale) {
         // Update the Messages locale
@@ -215,13 +218,11 @@ public class CrosswayController {
      * Processes a board coordinate produced from a mouse click by attempting to make a move.
      *
      * @param boardCoordinate The logical board position that was clicked.
-     *
      */
     private void processBoardClick(Point boardCoordinate) {
         Stone currentPlayer = game.getCurrentPlayer();
 
         if (attemptMoveExecution(boardCoordinate, currentPlayer)) {
-            splitPane.repaintBoard();
             checkForGameCompletion(currentPlayer);
         }
     }
@@ -409,7 +410,6 @@ public class CrosswayController {
     private void executeGameRestart() {
         initializeComponents();
         rebuildAfterGameChange();
-//        attachEventHandlers();
     }
 
     // ==================== History & Display ====================
@@ -437,7 +437,6 @@ public class CrosswayController {
     public void handleUndoRequest() {
         try {
             game.undoLastMove();
-            splitPane.repaintBoard();
             updateHistoryDisplay();
         } catch (IllegalStateException ex) {
             dialogHandler.showInfo(
@@ -453,7 +452,6 @@ public class CrosswayController {
     public void handleRedoRequest() {
         try {
             game.redoLastMove();
-            splitPane.repaintBoard();
             updateHistoryDisplay();
         } catch (IllegalStateException ex) {
             dialogHandler.showInfo(
@@ -553,6 +551,8 @@ public class CrosswayController {
 
         // Update the reference to the new view and re-attach handlers.
         this.view = splitPane.getBoardView();
+        game.addBoardChangeListener(view);
+        attachEventHandlers(); // Re-attach the click handler to the new view instance.
 
         // Sync history and UI display.
         updateHistoryDisplay();
@@ -561,7 +561,6 @@ public class CrosswayController {
         frame.pack();
 
         refreshWindow();
-        attachEventHandlers();
     }
 
 

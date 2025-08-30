@@ -3,6 +3,7 @@ package org.boardgames.crossway.ui;
 import org.boardgames.crossway.model.Board;
 import org.boardgames.crossway.model.Point;
 import org.boardgames.crossway.model.Stone;
+import org.boardgames.crossway.model.BoardChangeListener;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,24 +16,24 @@ import java.util.function.Consumer;
  * View component that renders the board grid and stones, scaling to fit the window
  * while maintaining a square aspect ratio during resize.
  *
- * This component automatically centers the board within its bounds and ensures
- * the board remains square regardless of the parent container's dimensions.
+ * <p>This component automatically centers the board within its bounds and ensures
+ * the board remains square regardless of the parent container's dimensions.</p>
  */
-public class BoardView extends JPanel {
+public class BoardView extends JPanel implements BoardChangeListener {
 
-    /** The board model to render */
+    /** The board model to render. */
     private final Board board;
 
-    /** Callback invoked when a board coordinate is clicked */
+    /** Callback invoked when a board coordinate is clicked. */
     private Consumer<Point> clickCallback;
 
-    /** Initial cell size multiplier for preferred size calculation */
+    /** Initial cell size multiplier for preferred size calculation. */
     private static final int INITIAL_CELL_SIZE = 40;
 
-    /** Margin factor for stone rendering (1/10 of cell size) */
+    /** Margin factor for stone rendering (1/10 of cell size). */
     private static final int MARGIN_DIVISOR = 10;
 
-    /** Minimum cell size to prevent rendering issues */
+    /** Minimum cell size to prevent rendering issues. */
     private static final int MIN_CELL_SIZE = 1;
 
     /**
@@ -45,6 +46,11 @@ public class BoardView extends JPanel {
         initializePreferredSize();
 
         addMouseListener(new MouseAdapter() {
+            /**
+             * Handles the mouse release event.
+             *
+             * @param e the mouse event
+             */
             @Override
             public void mouseReleased(MouseEvent e) {
                 if (clickCallback != null) {
@@ -245,4 +251,13 @@ public class BoardView extends JPanel {
         g2d.drawOval(x, y, diameter, diameter);
     }
 
+    /**
+     * Updates the view when the board model changes, triggering a repaint.
+     *
+     * @param board the board that has changed
+     */
+    @Override
+    public void onBoardChange(Board board) {
+        repaint();
+    }
 }

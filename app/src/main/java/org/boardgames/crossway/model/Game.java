@@ -4,17 +4,13 @@ import com.fasterxml.jackson.annotation.*;
 import org.boardgames.crossway.model.rules.*;
 import org.boardgames.crossway.utils.JsonUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 /**
  * Core game logic implementation for the Crossway board game.
- *
- * <p>This class manages the complete game state and enforces game rules.
- * It uses a Union-Find data structure through the {@link Connectivity} class
- * to efficiently track stone connectivity patterns and determine win conditions.
- * The game supports move validation, history tracking with undo and redo
- * functionality, and pattern-based rule checking.</p>
+ * Core game logic implementation for the Crossway board game.
  *
  * <p>Key features:</p>
  * <ul>
@@ -32,7 +28,6 @@ import java.util.Optional;
  * @author Gabriele Pintus
  * @version 1.0
  * @see Board
- * @see Connectivity
  * @see PatternChecker
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -52,6 +47,10 @@ public class Game {
 
     // ========== Game State ==========
     private Stone currentPlayer;
+
+    // ========== Listeners ==========
+    @JsonIgnore
+    private final List<BoardChangeListener> listeners = new ArrayList<>();
 
     // ========== Constructors ==========
 
@@ -122,6 +121,28 @@ public class Game {
         this.connectionChecker = new ConnectionChecker(board);
     }
 
+    // ========== Listener Management ==========
+
+    /**
+     * Registers a listener to be notified when the board state changes.
+     *
+     * @param listener the listener to register
+     */
+    public void addBoardChangeListener(BoardChangeListener listener) {
+        if (listener != null) {
+            listeners.add(listener);
+        }
+    }
+
+    /**
+     * Notifies all registered listeners that the board has changed.
+     */
+    private void notifyListeners() {
+        for (BoardChangeListener listener : listeners) {
+            listener.onBoardChange(board);
+        }
+    }
+
     // ========== Initialization Methods ==========
 
     /**
@@ -190,6 +211,8 @@ public class Game {
 
         // Switch to the next player.
         currentPlayer = currentPlayer.opposite();
+
+        notifyListeners();
     }
 
     // ========== Undo/Redo Operations ==========
@@ -217,11 +240,10 @@ public class Game {
         // Reverse the changes on the board.
         board.clearCell(lastMove.getPoint());
 
-        // Restore the connectivity state to the previous step.
-//        connectivity.rollback();
-
         // The current player becomes the one who just had their move undone.
         currentPlayer = lastMove.getStone();
+
+        notifyListeners();
     }
 
     /**
@@ -251,6 +273,8 @@ public class Game {
         // Re-apply the move. The history update is already handled by history.redo().
         board.placeStone(move.getPoint(), move.getStone());
         currentPlayer = currentPlayer.opposite();
+
+        notifyListeners();
     }
 
     // ========== Game State Queries ==========
