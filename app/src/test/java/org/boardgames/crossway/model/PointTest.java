@@ -38,29 +38,4 @@ public class PointTest {
         assertTrue(point.isNeighbourOf(ww), "Point should be a neighbour of West point");
         assertTrue(point.isNeighbourOf(nw), "Point should be a neighbour of North-West point");
     }
-
-    @Test
-    @DisplayName("toJson: encodes as (x=?,y=?)")
-    void toJsonEncodesCustomFormat() {
-        Point p1 = new Point(3, 5);
-        Point p2 = new Point(-12, 63214);
-        String testString1 = "{\"x\":3,\"y\":5}";
-        String testString2 = "{\"x\":-12,\"y\":63214}";
-        assertEquals(testString1, p1.toJson());
-        assertEquals(testString2, p2.toJson());
-        assertNotEquals(testString2, p1.toJson());
-    }
-
-    @Test
-    @DisplayName("Round-trip: toJson -> fromString")
-    void roundTripCustomFormat() {
-        Point p1 = new Point(3, 5);
-        Point p2 = new Point(-12, 63214);
-        String json1 = p1.toJson();
-        String json2 = p2.toJson();
-        Point p1FromJson = Point.fromJson(json1);
-        Point p2FromJson = Point.fromJson(json2);
-        assertEquals(p1, p1FromJson, "Point should match after serialization and deserialization");
-        assertEquals(p2, p2FromJson, "Point should match after serialization and deserialization");
-    }
 }

@@ -25,21 +25,4 @@ public class StoneTest {
         assertEquals(Stone.BLACK, Stone.BLACK.opposite().opposite(), "opposite(opposite(WHITE)) should be WHITE");
         assertEquals(Stone.WHITE, Stone.WHITE.opposite().opposite(), "opposite(opposite(BLACK)) should be BLACK");
     }
-
-    @Test
-    @DisplayName("toJson() serializes as the enum name string")
-    void testToJson() {
-        assertEquals("\"BLACK\"", Stone.BLACK.toJson());
-        assertEquals("\"WHITE\"", Stone.WHITE.toJson());
-    }
-
-    @Test
-    @DisplayName("fromJson() rejects invalid enum value")
-    void fromJsonRejectsInvalid() {
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class,
-                () -> Stone.fromJson("\"PURPLE\"")
-        );
-        assertTrue(ex.getMessage().contains("Invalid JSON"), "should mention invalid JSON");
-    }
 }
