@@ -1,77 +1,55 @@
 package org.boardgames.crossway.model;
 
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
 /**
- * Immutable record representing a point on the board.
- * Coordinates follow the standard (x, y) format, where:
- * - x is the column (horizontal)
- * - y is the row (vertical)
+ * An immutable record representing a point on the game board.
+ * Coordinates follow the standard (x, y) format, where 'x' is the column (horizontal)
+ * and 'y' is the row (vertical).
+ *
+ * <p>This record is designed to be used with the Jackson library for JSON serialization
+ * and deserialization, with annotations for forward compatibility and clean output.
+ *
+ * @param x The x-coordinate (column).
+ * @param y The y-coordinate (row).
+ * @author Gabriele Pintus
  */
-@JsonIgnoreProperties(ignoreUnknown = true)          // forward compatibility
-@JsonInclude(JsonInclude.Include.NON_NULL)           // cleaner output
-public record Point(int x, int y) implements Exportable {
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public record Point(int x, int y) {
 
     /**
-     * Checks if another point is a neighbour of this point.
-     * A neighbour is defined as a point that is directly adjacent
-     * either horizontally, vertically, or diagonally.
-     * Every point is considered a neighbour of itself.
+     * Checks if another point is a neighbor of this point.
      *
-     * @param other the point to check against
-     * @return true if the other point is a neighbour, false otherwise
+     * <p>A neighbor is defined as a point that is directly adjacent to this point,
+     * either horizontally, vertically, or diagonally. This includes the point itself,
+     * which is considered a neighbor. The method calculates the absolute difference
+     * between the x-coordinates and y-coordinates to determine adjacency.
+     *
+     * @param other The point to check against.
+     * @return {@code true} if the other point is a neighbor (within one unit horizontally
+     * and vertically), {@code false} otherwise.
      */
     public boolean isNeighbourOf(Point other) {
         return (Math.abs(this.x - other.x) <= 1 && Math.abs(this.y - other.y) <= 1);
     }
 
-    private static final ObjectMapper MAPPER =
-            new ObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-
     /**
-     * JSON creator for Jackson.
+     * JSON creator for Jackson deserialization.
+     *
+     * <p>This constructor is used by the Jackson library to create a new {@code Point}
+     * object from a JSON representation. The {@code @JsonProperty} annotations
+     * map the JSON fields "x" and "y" to the record's components.
+     *
+     * @param x The x-coordinate from the JSON input.
+     * @param y The y-coordinate from the JSON input.
      */
     @JsonCreator
     public Point(@JsonProperty("x") int x, @JsonProperty("y") int y) {
         this.x = x;
         this.y = y;
-    }
-
-
-    /**
-     * Serializes this Point to a JSON string.
-     *
-     * @return JSON representation of the Point
-     */
-    public String toJson() {
-        try {
-            return MAPPER.writeValueAsString(this); // e.g., {"x":3,"y":5}
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Failed to serialize Point", e);
-        }
-    }
-
-    /**
-     * Deserializes a Point from a JSON string.
-     *
-     * @param json the JSON string
-     * @return a Point object
-     */
-    public static Point fromJson(String json) {
-        try {
-            return MAPPER.readValue(json, Point.class);
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Invalid JSON for Point", e);
-        }
     }
 }

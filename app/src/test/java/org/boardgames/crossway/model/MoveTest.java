@@ -1,65 +1,67 @@
 package org.boardgames.crossway.model;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.*;
 
-
-class MoveTest {
+/**
+ * Unit tests for Move class.
+ */
+public class MoveTest {
 
     @Test
-    @DisplayName("Constructor validates non-null fields")
-    void constructorGuards() {
-        assertThrows(IllegalArgumentException.class, () -> new Move(null, Stone.BLACK));
-        assertThrows(IllegalArgumentException.class, () -> new Move(new Point(1,2), null));
+    @DisplayName("constructor sets point and stone correctly")
+    void testConstructor() {
+        Point point = new Point(0, 0);
+        Stone stone = Stone.BLACK;
+        Move move = new Move(point, stone);
+        assertEquals(point, move.getPoint(), "getPoint should return the constructed point");
+        assertEquals(stone, move.getStone(), "getStone should return the constructed stone");
     }
 
     @Test
-    @DisplayName("toJson produces expected structure")
-    void toJsonStructure() {
-        Move m = new Move(new Point(3, 5), Stone.BLACK);
-        String json = m.toJson();
-        // Minimal structural checks
-        assertTrue(json.contains("\"point\""));
-        assertTrue(json.contains("\"x\":3"));
-        assertTrue(json.contains("\"y\":5"));
-        assertTrue(json.contains("\"stone\":\"BLACK\""));
+    @DisplayName("constructor throws exception for null point")
+    void testConstructorNullPoint() {
+        assertThrows(IllegalArgumentException.class, () -> new Move(null, Stone.BLACK),
+                "Constructor should throw IllegalArgumentException for null point");
     }
 
     @Test
-    @DisplayName("fromJson parses valid JSON")
-    void fromJsonValid() {
-        String json = "{\"point\":{\"x\":3,\"y\":5},\"stone\":\"WHITE\"}";
-        Move m = Move.fromJson(json);
-        assertEquals(new Point(3,5), m.getPoint());
-        assertEquals(Stone.WHITE, m.getStone());
+    @DisplayName("constructor throws exception for null stone")
+    void testConstructorNullStone() {
+        assertThrows(IllegalArgumentException.class, () -> new Move(new Point(0, 0), null),
+                "Constructor should throw IllegalArgumentException for null stone");
     }
 
     @Test
-    @DisplayName("Round-trip: Move -> JSON -> Move")
-    void roundTrip() {
-        Move original = new Move(new Point(1, 2), Stone.BLACK);
-        Move parsed = Move.fromJson(original.toJson());
-        assertEquals(original, parsed, "Points should match");
+    @DisplayName("equals returns true for identical moves")
+    void testEqualsSame() {
+        Move m1 = new Move(new Point(0, 0), Stone.BLACK);
+        Move m2 = new Move(new Point(0, 0), Stone.BLACK);
+        assertEquals(m1, m2, "Identical moves should be equal");
     }
 
     @Test
-    @DisplayName("fromJson rejects invalid payloads")
-    void fromJsonInvalid() {
-        // Missing stone
-        String noStone = "{\"point\":{\"x\":3,\"y\":5}}";
-        assertThrows(IllegalArgumentException.class, () -> Move.fromJson(noStone));
+    @DisplayName("equals returns false for different points")
+    void testEqualsDifferentPoint() {
+        Move m1 = new Move(new Point(0, 0), Stone.BLACK);
+        Move m2 = new Move(new Point(1, 0), Stone.BLACK);
+        assertNotEquals(m1, m2, "Moves with different points should not be equal");
+    }
 
-        // Missing point
-        String noPoint = "{\"stone\":\"BLACK\"}";
-        assertThrows(IllegalArgumentException.class, () -> Move.fromJson(noPoint));
+    @Test
+    @DisplayName("equals returns false for different stones")
+    void testEqualsDifferentStone() {
+        Move m1 = new Move(new Point(0, 0), Stone.BLACK);
+        Move m2 = new Move(new Point(0, 0), Stone.WHITE);
+        assertNotEquals(m1, m2, "Moves with different stones should not be equal");
+    }
 
-        // Bad types
-        String badTypes = "{\"point\":\"(x=3,y=5)\",\"stone\":123}";
-        assertThrows(IllegalArgumentException.class, () -> Move.fromJson(badTypes));
+    @Test
+    @DisplayName("hashCode is consistent with equals")
+    void testHashCode() {
+        Move m1 = new Move(new Point(0, 0), Stone.BLACK);
+        Move m2 = new Move(new Point(0, 0), Stone.BLACK);
+        assertEquals(m1.hashCode(), m2.hashCode(), "Equal moves should have the same hashCode");
     }
 }

@@ -1,5 +1,7 @@
 package org.boardgames.crossway.model;
 
+import org.boardgames.crossway.model.rules.DiagonalXRule;
+import org.boardgames.crossway.model.rules.PatternChecker;
 import org.junit.jupiter.api.*;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;

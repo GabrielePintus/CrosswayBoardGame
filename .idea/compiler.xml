@@ -3,4 +3,11 @@
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel target="21" />
   </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="CrosswayBoardGame.app" options="-Xlint:deprecation -Xlint:unchecked" />
+      <module name="CrosswayBoardGame.app.main" options="-Xlint:deprecation -Xlint:unchecked" />
+      <module name="CrosswayBoardGame.app.test" options="-Xlint:deprecation -Xlint:unchecked" />
+    </option>
+  </component>
 </project>
