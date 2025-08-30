@@ -119,6 +119,7 @@ public class Game {
 
         // Rebuild transient components that are not part of the JSON.
         this.patternChecker = createDefaultPatternChecker();
+        this.connectionChecker = new ConnectionChecker(board);
     }
 
     // ========== Initialization Methods ==========
