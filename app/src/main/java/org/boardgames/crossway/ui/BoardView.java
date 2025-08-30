@@ -6,7 +6,10 @@ import org.boardgames.crossway.model.Stone;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * View component that renders the board grid and stones, scaling to fit the window
@@ -19,6 +22,9 @@ public class BoardView extends JPanel {
 
     /** The board model to render */
     private final Board board;
+
+    /** Callback invoked when a board coordinate is clicked */
+    private Consumer<Point> clickCallback;
 
     /** Initial cell size multiplier for preferred size calculation */
     private static final int INITIAL_CELL_SIZE = 40;
@@ -37,6 +43,15 @@ public class BoardView extends JPanel {
     public BoardView(Board board) {
         this.board = board;
         initializePreferredSize();
+
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (clickCallback != null) {
+                    clickCallback.accept(mouseEventToPoint(e));
+                }
+            }
+        });
     }
 
     /**
@@ -77,6 +92,33 @@ public class BoardView extends JPanel {
 
         int panelSide = Math.min(getWidth(), getHeight());
         return Math.max(MIN_CELL_SIZE, panelSide / boardSize);
+    }
+
+    /**
+     * Converts a {@link MouseEvent}'s pixel location to a logical board coordinate.
+     *
+     * @param mouseEvent the mouse event to convert
+     * @return the corresponding board {@link Point}
+     */
+    public Point mouseEventToPoint(MouseEvent mouseEvent) {
+        int boardSize = board.getSize().size();
+        int cellSize = getCellSize();
+        int boardPixelSize = cellSize * boardSize;
+        int xOffset = (getWidth() - boardPixelSize) / 2;
+        int yOffset = (getHeight() - boardPixelSize) / 2;
+
+        int boardX = (mouseEvent.getX() - xOffset) / cellSize;
+        int boardY = (mouseEvent.getY() - yOffset) / cellSize;
+        return new Point(boardX, boardY);
+    }
+
+    /**
+     * Registers a callback to be invoked when a board coordinate is clicked.
+     *
+     * @param callback the callback consumer receiving the board {@link Point}
+     */
+    public void setBoardClickCallback(Consumer<Point> callback) {
+        this.clickCallback = callback;
     }
 
     /**

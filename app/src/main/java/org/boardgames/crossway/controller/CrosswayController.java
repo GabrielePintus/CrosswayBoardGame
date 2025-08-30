@@ -13,8 +13,6 @@ import org.boardgames.crossway.utils.Settings;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.Locale;
 
@@ -208,57 +206,24 @@ public class CrosswayController {
      * Attaches all necessary event listeners to the components.
      */
     private void attachEventHandlers() {
-        // Attach the mouse handler to the board view.
-        view.addMouseListener(new BoardMouseHandler());
-    }
-
-    /**
-     * Removes all existing mouse listeners from the board view to prevent duplicates.
-     */
-    private void detachBoardMouseHandlers() {
-        for (var listener : view.getMouseListeners()) {
-            view.removeMouseListener(listener);
-        }
-    }
-
-    /**
-     * A private inner class that handles mouse events on the board view.
-     */
-    private class BoardMouseHandler extends MouseAdapter {
-        @Override
-        public void mouseReleased(MouseEvent e) {
-            processMouseClick(e);
-        }
+        view.setBoardClickCallback(this::processBoardClick);
     }
 
     // ==================== Input Processing ====================
 
     /**
-     * Processes a mouse click event by attempting to make a move.
+     * Processes a board coordinate produced from a mouse click by attempting to make a move.
      *
-     * @param mouseEvent The mouse event containing the click location.
+     * @param boardCoordinate The logical board position that was clicked.
+     *
      */
-    private void processMouseClick(MouseEvent mouseEvent) {
-        Point boardCoordinate = convertMouseToBoardCoordinate(mouseEvent);
+    private void processBoardClick(Point boardCoordinate) {
         Stone currentPlayer = game.getCurrentPlayer();
 
         if (attemptMoveExecution(boardCoordinate, currentPlayer)) {
             splitPane.repaintBoard();
             checkForGameCompletion(currentPlayer);
         }
-    }
-
-    /**
-     * Converts a mouse click's screen coordinates to a logical board coordinate.
-     *
-     * @param mouseEvent The event containing the pixel location.
-     * @return The corresponding {@link Point} on the board.
-     */
-    private Point convertMouseToBoardCoordinate(MouseEvent mouseEvent) {
-        int cellSize = view.getCellSize();
-        int boardX = mouseEvent.getX() / cellSize;
-        int boardY = mouseEvent.getY() / cellSize;
-        return new Point(boardX, boardY);
     }
 
     /**
