@@ -87,6 +87,13 @@ public class Board {
     }
 
     /**
+     * Swaps the color of every stone currently on the board.
+     */
+    public void swapColors() {
+        grid.replaceAll((p, s) -> s.opposite());
+    }
+
+    /**
      * Places a stone at a specified point on the board.
      *
      * @param point The point where the stone will be placed.

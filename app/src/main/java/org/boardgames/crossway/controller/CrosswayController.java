@@ -223,6 +223,9 @@ public class CrosswayController {
         Stone currentPlayer = game.getCurrentPlayer();
 
         if (attemptMoveExecution(boardCoordinate, currentPlayer)) {
+            if (game.isPieAvailable()) {
+                promptSwapDecision();
+            }
             checkForGameCompletion(currentPlayer);
         }
     }
@@ -242,6 +245,26 @@ public class CrosswayController {
         } catch (IllegalArgumentException ex) {
             dialogHandler.showWarning(Messages.get("error.invalidMove"), ex.getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Asks the player if they wish to swap colors after the opening move.
+     */
+    private void promptSwapDecision() {
+        int choice = JOptionPane.showOptionDialog(
+                frame,
+                Messages.get("game.swapPrompt"),
+                Messages.get("game.swap"),
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                new Object[]{Messages.get("game.swap"), Messages.get("game.continue")},
+                Messages.get("game.continue")
+        );
+        if (choice == JOptionPane.YES_OPTION) {
+            game.swapColors();
+            updateHistoryDisplay();
         }
     }
 

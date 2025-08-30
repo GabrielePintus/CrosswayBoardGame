@@ -47,6 +47,7 @@ public class Game {
 
     // ========== Game State ==========
     private Stone currentPlayer;
+    private boolean pieAvailable;
 
     // ========== Listeners ==========
     @JsonIgnore
@@ -74,6 +75,7 @@ public class Game {
         this.connectionChecker = new ConnectionChecker(board);
         this.history = new History();
         this.currentPlayer = DEFAULT_STARTING_PLAYER;
+        this.pieAvailable = false;
     }
 
     /**
@@ -107,7 +109,8 @@ public class Game {
     public Game(
             @JsonProperty("board") Board board,
             @JsonProperty("history") History history,
-            @JsonProperty("currentPlayer") Stone currentPlayer
+            @JsonProperty("currentPlayer") Stone currentPlayer,
+            @JsonProperty("pieAvailable") Boolean pieAvailable
     ) {
         if (board == null) {
             throw new IllegalArgumentException("Board cannot be null");
@@ -115,6 +118,7 @@ public class Game {
         this.board = board;
         this.history = (history != null) ? history : new History();
         this.currentPlayer = (currentPlayer != null) ? currentPlayer : DEFAULT_STARTING_PLAYER;
+        this.pieAvailable = (pieAvailable != null) ? pieAvailable : false;
 
         // Rebuild transient components that are not part of the JSON.
         this.patternChecker = createDefaultPatternChecker();
@@ -208,6 +212,7 @@ public class Game {
 
         // Record the move in the history.
         history.commit(move);
+        pieAvailable = history.getPastMoves().size() == 1;
 
         // Switch to the next player.
         currentPlayer = currentPlayer.opposite();
@@ -243,6 +248,8 @@ public class Game {
         // The current player becomes the one who just had their move undone.
         currentPlayer = lastMove.getStone();
 
+        pieAvailable = history.getPastMoves().size() == 1;
+
         notifyListeners();
     }
 
@@ -274,8 +281,23 @@ public class Game {
         board.placeStone(move.getPoint(), move.getStone());
         currentPlayer = currentPlayer.opposite();
 
+        pieAvailable = history.getPastMoves().size() == 1;
+
         notifyListeners();
     }
+
+    /**
+     * Swaps the colors of all stones on the board and in the move history,
+     * toggles the current player, and disables the pie rule.
+     */
+    public void swapColors() {
+        board.swapColors();
+        history.swapColors();
+        currentPlayer = currentPlayer.opposite();
+        pieAvailable = false;
+        notifyListeners();
+    }
+
 
     // ========== Game State Queries ==========
 
@@ -319,6 +341,15 @@ public class Game {
         return currentPlayer;
     }
 
+    /**
+     * Indicates whether the pie rule swap is currently available.
+     *
+     * @return {@code true} if the swap option is available, {@code false} otherwise.
+     */
+    @JsonProperty("pieAvailable")
+    public boolean isPieAvailable() {
+        return pieAvailable;
+    }
 
     // ========== Win Condition Checking ==========
 

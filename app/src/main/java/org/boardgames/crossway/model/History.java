@@ -149,6 +149,14 @@ public final class History {
     }
 
     /**
+     * Swaps the color of all moves stored in this history.
+     */
+    public void swapColors() {
+        pastMoves.replaceAll(m -> new Move(m.getPoint(), m.getStone().opposite()));
+        futureMoves.replaceAll(m -> new Move(m.getPoint(), m.getStone().opposite()));
+    }
+
+    /**
      * Returns a copy of the past moves.
      * <p>This method is used for serialization and to provide a read-only view of
      * the moves that have been committed. The moves are returned in chronological order.</p>
