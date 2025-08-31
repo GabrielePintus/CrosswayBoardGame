@@ -332,10 +332,9 @@ public class Game {
     }
 
     /**
-     * Swaps the colors of all stones on the board and in the move history,
-     * and disables the pie rule without altering the current turn.
+     * Disables the pie rule swap option permanently.
      */
-    public void swapColors() {
+    public void disablePieRule() {
         pieAvailable = false;
         notifyListeners();
     }

@@ -29,7 +29,7 @@ public class App {
         SwingUtilities.invokeLater(() -> {
             // Create an instance of the main controller with a default board size.
             // This initializes the model, view, and ties them together.
-            new CrosswayController(BoardSize.REGULAR);
+            new CrosswayController(BoardSize.REGULAR, () -> System.exit(0));
         });
     }
 }

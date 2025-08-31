@@ -16,7 +16,7 @@ import javax.swing.*;
  *
  * @author Gabriele Pintus
  */
-public class DialogHandler {
+public class DialogHandler implements BoardSizePrompt {
 
     /**
      * The parent frame for the dialogs, used for correct positioning.
@@ -99,7 +99,6 @@ public class DialogHandler {
      * @param winner the player who won the game.
      * @return an integer representing the chosen action.
      */
-//    int showWinDialog(Stone winner) {
     int showWinDialog(Player winner) {
         return JOptionPane.showOptionDialog(
                 frame,
@@ -145,5 +144,25 @@ public class DialogHandler {
         String blackName = blackField.getText().isBlank() ? "Black" : blackField.getText().trim();
         String whiteName = whiteField.getText().isBlank() ? "White" : whiteField.getText().trim();
         return new String[]{blackName, whiteName};
+    }
+
+    /**
+     * Shows a dialog with options for selecting a board size and returns the user's choice.
+     *
+     * @param options The array of strings to display as options.
+     * @param defaultOption The option that is selected by default.
+     * @return an integer representing the index of the chosen option.
+     */
+    public int promptForBoardSize(Object[] options, Object defaultOption) {
+        return JOptionPane.showOptionDialog(
+                frame,
+                Messages.get("menu.game.selectBoardSize"),
+                Messages.get("menu.game.new"),
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                defaultOption
+        );
     }
 }

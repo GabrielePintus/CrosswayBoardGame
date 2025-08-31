@@ -6,10 +6,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for BoardChangeListener interface.
+ * Unit tests for the {@link BoardChangeListener} functional interface.
+ * This class verifies that the single abstract method {@code onBoardChange}
+ * is correctly implemented and invoked with the expected board object.
  */
 public class BoardChangeListenerTest {
 
+    /**
+     * Tests the invocation of the {@code onBoardChange} method on a listener.
+     * It verifies that the listener's method is called and receives the correct
+     * board object as an argument.
+     */
     @Test
     @DisplayName("onBoardChange is invoked with correct board")
     void testOnBoardChangeInvocation() {

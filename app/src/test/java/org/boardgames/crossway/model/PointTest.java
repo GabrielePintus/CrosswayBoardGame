@@ -5,10 +5,14 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for Point record.
+ * Unit tests for the {@link Point} record, verifying the correctness of its neighbor detection logic.
  */
 public class PointTest {
 
+    /**
+     * Tests the {@link Point#isNeighbourOf(Point)} method to ensure a point correctly identifies
+     * itself as its own neighbor.
+     */
     @Test
     @DisplayName("isNeighbourOf detects self as neighbor")
     void testIsNeighbourOfSelf() {
@@ -16,6 +20,10 @@ public class PointTest {
         assertTrue(p.isNeighbourOf(p), "A point should be a neighbor of itself");
     }
 
+    /**
+     * Tests the {@link Point#isNeighbourOf(Point)} method to ensure it correctly identifies all
+     * horizontally, vertically, and diagonally adjacent points as neighbors.
+     */
     @Test
     @DisplayName("isNeighbourOf detects adjacent points")
     void testIsNeighbourOfAdjacent() {
@@ -33,6 +41,10 @@ public class PointTest {
         assertTrue(p.isNeighbourOf(new Point(2, 2)));
     }
 
+    /**
+     * Tests the {@link Point#isNeighbourOf(Point)} method to ensure it correctly identifies
+     * points that are not directly adjacent as non-neighbors.
+     */
     @Test
     @DisplayName("isNeighbourOf detects non-adjacent points")
     void testIsNeighbourOfDistant() {
