@@ -6,7 +6,6 @@ import org.boardgames.crossway.model.Point;
 import org.boardgames.crossway.model.Stone;
 import org.boardgames.crossway.utils.Messages;
 
-import javax.swing.*;
 
 /**
  * Controller responsible for mediating interactions with the {@link Game} model.
@@ -70,9 +69,8 @@ public class GameController {
     }
 
     /**
-     * Processes a board coordinate produced from a mouse click by attempting to make a move.
-     * It first checks if a legal move is available, then attempts the move,
-     * and finally checks for game completion or the opportunity to perform a "pie rule" swap.
+     * Processes a board coordinate produced from a mouse click by orchestrating the
+     * move execution, optional pie rule swap, and win handling.
      *
      * @param boardCoordinate The logical board position that was clicked.
      * @see Point
@@ -89,11 +87,17 @@ public class GameController {
             return;
         }
 
-        if (attemptMoveExecution(boardCoordinate, currentPlayer)) {
-            if (game.isPieAvailable()) {
-                promptSwapDecision();
-            }
-            checkForGameCompletion(currentPlayer);
+        if (!attemptMoveExecution(boardCoordinate, currentPlayer)) {
+            return;
+        }
+
+        if (game.isPieAvailable() && dialogHandler.askPieSwap()) {
+            game.swapColors();
+            uiController.updateHistoryDisplay(game.getMoveHistory());
+        }
+
+        if (game.hasWon(currentPlayer)) {
+            processWinDialogChoice(dialogHandler.showWinDialog(currentPlayer));
         }
     }
 
@@ -113,54 +117,6 @@ public class GameController {
         } catch (IllegalArgumentException ex) {
             dialogHandler.showWarning(Messages.get("error.invalidMove"), ex.getMessage());
             return false;
-        }
-    }
-
-    /**
-     * Displays a dialog to the current player, prompting them to decide whether to
-     * swap colors based on the "pie rule." If the player chooses to swap, the
-     * game's colors are swapped, and the history display is updated.
-     */
-    private void promptSwapDecision() {
-        int choice = JOptionPane.showOptionDialog(
-                uiController.getFrame(),
-                Messages.get("game.swapPrompt"),
-                Messages.get("game.swap"),
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                new Object[]{Messages.get("game.swap"), Messages.get("game.continue")},
-                Messages.get("game.continue")
-        );
-        if (choice == JOptionPane.YES_OPTION) {
-            game.swapColors();
-            uiController.updateHistoryDisplay(game.getMoveHistory());
-        }
-    }
-
-    /**
-     * Checks if the current player has won the game. If so, it displays a game-over
-     * dialog with options to start a new game, restart, or exit.
-     *
-     * @param currentPlayer The {@link Stone} of the player to check for a win.
-     */
-    private void checkForGameCompletion(Stone currentPlayer) {
-        if (game.hasWon(currentPlayer)) {
-            int choice = JOptionPane.showOptionDialog(
-                    uiController.getFrame(),
-                    "%s %s".formatted(currentPlayer, Messages.get("game.wins")),
-                    Messages.get("game.over"),
-                    JOptionPane.DEFAULT_OPTION,
-                    JOptionPane.INFORMATION_MESSAGE,
-                    null,
-                    new Object[]{
-                            Messages.get("menu.game.new"),
-                            Messages.get("menu.game.restart"),
-                            Messages.get("menu.file.exit")
-                    },
-                    Messages.get("menu.game.restart")
-            );
-            processWinDialogChoice(choice);
         }
     }
 
