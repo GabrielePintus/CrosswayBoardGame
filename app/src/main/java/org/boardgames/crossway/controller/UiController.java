@@ -3,6 +3,7 @@ package org.boardgames.crossway.controller;
 import org.boardgames.crossway.model.Board;
 import org.boardgames.crossway.model.Game;
 import org.boardgames.crossway.model.Move;
+import org.boardgames.crossway.model.Player;
 import org.boardgames.crossway.model.Point;
 import org.boardgames.crossway.utils.Messages;
 import org.boardgames.crossway.ui.BoardHistorySplitPane;
@@ -26,7 +27,7 @@ import java.util.function.Consumer;
  * @see BoardView
  * @see HistoryView
  */
-public class UiController {
+public class UiController implements GameEvents {
 
     /** The main application window frame. */
     private JFrame frame;
@@ -36,16 +37,28 @@ public class UiController {
     private BoardView boardView;
     /** The view component for displaying the game move history. */
     private HistoryView historyView;
+    /** Handles user dialogs such as warnings and confirmations. */
+    private DialogHandler dialogHandler;
 
     /**
      * Constructs a new {@code UiController}, initializing the UI components and setting up the user interface.
      *
      * @param controller The main application controller.
      * @param game The initial game model.
+     * @param scoreboardLabel The label used to display the current score.
      */
     public UiController(CrosswayController controller,Game game, JLabel scoreboardLabel) {
         initializeComponents(game);
         setupUserInterface(controller, scoreboardLabel);
+    }
+
+    /**
+     * Injects the {@link DialogHandler} used to display dialogs.
+     *
+     * @param dialogHandler the dialog handler to use
+     */
+    public void setDialogHandler(DialogHandler dialogHandler) {
+        this.dialogHandler = dialogHandler;
     }
 
     /**
@@ -58,21 +71,20 @@ public class UiController {
         Board board = game.getBoard();
         if (splitPane == null) {
             splitPane = new BoardHistorySplitPane(new BoardView(board));
-            boardView = splitPane.getBoardView();
-            historyView = splitPane.getHistoryView();
-            game.addBoardChangeListener(boardView);
+
         } else {
             splitPane.replaceBoard(board);
-            boardView = splitPane.getBoardView();
-            historyView = splitPane.getHistoryView();
-            game.addBoardChangeListener(boardView);
         }
+        boardView = splitPane.getBoardView();
+        historyView = splitPane.getHistoryView();
+        game.addBoardChangeListener(boardView);
     }
 
     /**
      * Sets up the main user interface, including the main frame and adding the split pane.
      *
      * @param controller The main application controller.
+     * @param scoreboardLabel The label used to display the current score.
      */
     private void setupUserInterface(CrosswayController controller, JLabel scoreboardLabel) {
         frame = FrameFactory.createFrame(controller, scoreboardLabel);
@@ -108,6 +120,16 @@ public class UiController {
      */
     public void updateHistoryDisplay(List<Move> history) {
         historyView.updateHistory(history);
+    }
+
+    /**
+     * Refreshes the history view. This method is part of the {@link GameEvents} interface.
+     *
+     * @param history The list of moves to display.
+     */
+    @Override
+    public void refreshHistory(List<Move> history) {
+        updateHistoryDisplay(history);
     }
 
     /**
@@ -187,8 +209,56 @@ public class UiController {
     /**
      * Refreshes the main window by revalidating and repainting it.
      */
+    @Override
     public void refreshWindow() {
         frame.revalidate();
         frame.repaint();
+    }
+
+    /**
+     * Prompts the user to decide whether to swap colors using the pie rule.
+     * This method is part of the {@link GameEvents} interface.
+     *
+     * @return {@code true} if the user chooses to swap, {@code false} otherwise.
+     */
+    @Override
+    public boolean showPieDialog() {
+        return dialogHandler.askPieSwap();
+    }
+
+    /**
+     * Shows a dialog informing the user that a player has won and returns the user's choice.
+     * This method is part of the {@link GameEvents} interface.
+     *
+     * @param winner The player who won the game.
+     * @return An integer representing the chosen action.
+     */
+    @Override
+    public int showWinDialog(Player winner) {
+        return dialogHandler.showWinDialog(winner);
+    }
+
+    /**
+     * Displays an informational dialog to the user.
+     * This method is part of the {@link GameEvents} interface.
+     *
+     * @param title The title of the dialog.
+     * @param message The message to display.
+     */
+    @Override
+    public void showInfo(String title, String message) {
+        dialogHandler.showInfo(title, message);
+    }
+
+    /**
+     * Displays a warning dialog to the user.
+     * This method is part of the {@link GameEvents} interface.
+     *
+     * @param title The title of the dialog.
+     * @param message The message to display.
+     */
+    @Override
+    public void showWarning(String title, String message) {
+        dialogHandler.showWarning(title, message);
     }
 }

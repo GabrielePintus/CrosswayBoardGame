@@ -13,21 +13,19 @@ import org.boardgames.crossway.utils.Messages;
  * <p>
  * It contains the move-processing logic that was previously embedded in
  * {@link CrosswayController}. User interactions coming from the UI are
- * translated here into model operations. Any UI updates are delegated back to
- * {@link UiController}.
+ * translated here into model operations. Any UI updates are delegated back via
+ * the {@link GameEvents} interface.
  * </p>
  *
  * @see Game
- * @see UiController
+ * @see GameEvents
  */
 public class GameController {
 
     /** The current game model instance. */
     private Game game;
-    /** The controller responsible for managing UI updates. */
-    private final UiController uiController;
-    /** The handler for displaying dialogs and alerts to the user. */
-    private final DialogHandler dialogHandler;
+    /** Callback target for all UI updates and dialogs. */
+    private final GameEvents gameEvents;
     /** A callback to be executed when a new game is requested. */
     private final Runnable newGameCallback;
     /** A callback to be executed when a game restart is requested. */
@@ -45,23 +43,20 @@ public class GameController {
      * Constructs a new {@code GameController} with the specified dependencies and callbacks.
      *
      * @param game The initial {@link Game} model instance.
-     * @param uiController The {@link UiController} for managing UI state.
-     * @param dialogHandler The {@link DialogHandler} for displaying user dialogs.
+     * @param gameEvents   The {@link GameEvents} implementation for UI updates and dialogs.
      * @param newGameCallback A callback for starting a new game.
      * @param restartCallback A callback for restarting the current game.
      * @param exitCallback A callback for exiting the application.
      */
     public GameController(Game game,
-                          UiController uiController,
-                          DialogHandler dialogHandler,
+                          GameEvents gameEvents,
                           Runnable newGameCallback,
                           Runnable restartCallback,
                           Runnable exitCallback,
                           PlayerManager playerManager,
                           Runnable scoreboardRefresh) {
         this.game = game;
-        this.uiController = uiController;
-        this.dialogHandler = dialogHandler;
+        this.gameEvents = gameEvents;
         this.newGameCallback = newGameCallback;
         this.restartCallback = restartCallback;
         this.exitCallback = exitCallback;
@@ -90,7 +85,7 @@ public class GameController {
         Stone currentPlayer = game.getCurrentPlayer();
 
         if (!game.hasLegalMove(currentPlayer)) {
-            dialogHandler.showInfo(
+            gameEvents.showInfo(
                     Messages.get("game.forfeit.title"),
                     Messages.format("game.forfeit.message", currentPlayer)
             );
@@ -102,18 +97,18 @@ public class GameController {
             return;
         }
 
-        if (game.isPieAvailable() && dialogHandler.askPieSwap()) {
+        if (game.isPieAvailable() && gameEvents.showPieDialog()) {
             game.swapColors();
             playerManager.swapColors();
             scoreboardRefresh.run();
-            uiController.updateHistoryDisplay(game.getMoveHistory());
-            uiController.refreshWindow();
+            gameEvents.refreshHistory(game.getMoveHistory());
+            gameEvents.refreshWindow();
         }
 
         if (game.hasWon(currentPlayer)) {
             playerManager.recordWin(currentPlayer);
             scoreboardRefresh.run();
-            processWinDialogChoice(dialogHandler.showWinDialog(playerManager.getPlayer(currentPlayer)));
+            processWinDialogChoice(gameEvents.showWinDialog(playerManager.getPlayer(currentPlayer)));
         }
     }
 
@@ -128,10 +123,10 @@ public class GameController {
     private boolean attemptMoveExecution(Point position, Stone player) {
         try {
             game.makeMove(new Move(position, player));
-            uiController.updateHistoryDisplay(game.getMoveHistory());
+            gameEvents.refreshHistory(game.getMoveHistory());
             return true;
         } catch (IllegalArgumentException ex) {
-            dialogHandler.showWarning(Messages.get("error.invalidMove"), ex.getMessage());
+            gameEvents.showWarning(Messages.get("error.invalidMove"), ex.getMessage());
             return false;
         }
     }
@@ -160,9 +155,9 @@ public class GameController {
     public void handleUndoRequest() {
         try {
             game.undoLastMove();
-            uiController.updateHistoryDisplay(game.getMoveHistory());
+            gameEvents.refreshHistory(game.getMoveHistory());
         } catch (IllegalStateException ex) {
-            dialogHandler.showInfo(
+            gameEvents.showInfo(
                     Messages.get("menu.toolbar.undo"),
                     Messages.get("warning.toolbar.undo")
             );
@@ -176,9 +171,9 @@ public class GameController {
     public void handleRedoRequest() {
         try {
             game.redoLastMove();
-            uiController.updateHistoryDisplay(game.getMoveHistory());
+            gameEvents.refreshHistory(game.getMoveHistory());
         } catch (IllegalStateException ex) {
-            dialogHandler.showInfo(
+            gameEvents.showInfo(
                     Messages.get("menu.toolbar.redo"),
                     Messages.get("warning.toolbar.redo")
             );
