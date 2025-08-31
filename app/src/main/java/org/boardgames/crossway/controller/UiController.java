@@ -45,11 +45,10 @@ public class UiController implements GameEvents {
      *
      * @param controller The main application controller.
      * @param game The initial game model.
-     * @param scoreboardLabel The label used to display the current score.
      */
-    public UiController(CrosswayController controller,Game game, JLabel scoreboardLabel) {
+    public UiController(CrosswayController controller, Game game) {
         initializeComponents(game);
-        setupUserInterface(controller, scoreboardLabel);
+        setupUserInterface(controller);
     }
 
     /**
@@ -84,14 +83,15 @@ public class UiController implements GameEvents {
      * Sets up the main user interface, including the main frame and adding the split pane.
      *
      * @param controller The main application controller.
-     * @param scoreboardLabel The label used to display the current score.
      */
-    private void setupUserInterface(CrosswayController controller, JLabel scoreboardLabel) {
-        frame = FrameFactory.createFrame(controller, scoreboardLabel);
+    private void setupUserInterface(CrosswayController controller) {
+        frame = FrameFactory.createFrame(controller);
         frame.add(splitPane, BorderLayout.CENTER);
         frame.pack();
         splitPane.setDividerLocation(splitPane.getWidth());
         frame.setLocationRelativeTo(null);
+//        frame.revalidate();
+//        frame.repaint();
         frame.setVisible(true);
     }
 

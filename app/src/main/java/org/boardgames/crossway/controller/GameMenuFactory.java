@@ -17,14 +17,15 @@ abstract class GameMenuFactory extends MenuFactory {
     /**
      * Creates the "Game" menu with options for a new game and restarting the current one.
      *
-     * @param controller The controller that handles the game actions.
+     * @param controller The controller that handles general game actions.
+     * @param scoreboardController Controller handling player-related requests.
      * @return The configured "Game" menu.
      */
-    static JMenu createGameMenu(CrosswayController controller) {
+    static JMenu createGameMenu(CrosswayController controller, ScoreboardController scoreboardController) {
         JMenu gameMenu = new JMenu(Messages.get("menu.game"));
         gameMenu.add(createMenuItem(Messages.get("menu.game.new"), controller::handleNewGameRequest));
         gameMenu.add(createMenuItem(Messages.get("menu.game.restart"), controller::handleRestartRequest));
-        gameMenu.add(createMenuItem(Messages.get("menu.game.changePlayers"), controller::handleChangePlayersRequest));
+        gameMenu.add(createMenuItem(Messages.get("menu.game.changePlayers"), scoreboardController::handleChangePlayersRequest));
         return gameMenu;
     }
 }

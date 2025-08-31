@@ -3,6 +3,7 @@ package org.boardgames.crossway.controller;
 import org.boardgames.crossway.model.*;
 import org.junit.jupiter.api.Test;
 
+import javax.swing.JLabel;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -52,9 +53,11 @@ class GameControllerTest {
     @Test
     void processBoardClickTriggersHistoryRefreshAndPieDialog() {
         Game game = new Game(new BoardSize(3));
-        PlayerManager pm = new PlayerManager("A", "B");
+        ScoreboardController sb = new ScoreboardController("A", "B", new JLabel(), null) {
+            @Override public void refreshScoreboard() { }
+        };
         MockGameEvents events = new MockGameEvents();
-        GameController controller = new GameController(game, events, ()->{}, ()->{}, ()->{}, pm, ()->{});
+        GameController controller = new GameController(game, events, ()->{}, ()->{}, ()->{}, sb);
 
         controller.processBoardClick(new Point(0, 0));
 
@@ -75,9 +78,11 @@ class GameControllerTest {
                 return false;
             }
         };
-        PlayerManager pm = new PlayerManager("A", "B");
+        ScoreboardController sb = new ScoreboardController("A", "B", new JLabel(), null) {
+            @Override public void refreshScoreboard() { }
+        };
         MockGameEvents events = new MockGameEvents();
-        GameController controller = new GameController(game, events, ()->{}, ()->{}, ()->{}, pm, ()->{});
+        GameController controller = new GameController(game, events, ()->{}, ()->{}, ()->{}, sb);
 
         controller.processBoardClick(new Point(0, 0));
 

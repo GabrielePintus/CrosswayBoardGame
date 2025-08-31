@@ -77,11 +77,11 @@ public class CrosswayController {
      */
     private final DialogHandler dialogHandler;
 
-    /** Manages player names, colors and scores. */
-    private final PlayerManager playerManager;
+    /** Handles file import and export operations. */
+    private final FileController fileController;
 
-    /** Label displayed in the menu bar showing the current scoreboard. */
-    private final JLabel scoreboardLabel = new JLabel();
+    /** Manages the scoreboard and player information. */
+    private final ScoreboardController scoreboardController;
 
     /**
      * The current dimension of the square board.
@@ -116,21 +116,22 @@ public class CrosswayController {
         validateBoardSize(boardSize);
         this.boardSize = boardSize;
         this.game = new Game(new BoardSize(boardSize));
-        this.uiController = new UiController(this, game, scoreboardLabel);
+        this.uiController = new UiController(this, game);
         this.dialogHandler = new DialogHandler(uiController.getFrame());
         uiController.setDialogHandler(dialogHandler);
         String[] names = dialogHandler.askPlayerNames();
-        this.playerManager = new PlayerManager(names[0], names[1]);
+        this.scoreboardController = new ScoreboardController(names[0], names[1], new JLabel(), dialogHandler);
+        this.fileController = new FileController(() -> game, this::updateGame, uiController, dialogHandler);
         this.gameController = new GameController(
                 game,
                 uiController,
                 this::handleNewGameRequest,
                 this::handleRestartRequest,
                 this::handleExitRequest,
-                playerManager,
-                this::refreshScoreboard);
+                scoreboardController);
+        uiController.getFrame().setJMenuBar(MenuBarFactory.createMenuBar(this, fileController, scoreboardController));
+        uiController.refreshWindow();
         attachEventHandlers();
-        refreshScoreboard();
     }
 
     // ==================== Initialization ====================
@@ -160,8 +161,8 @@ public class CrosswayController {
         Messages.setLocale(newLocale);
 
         // Recreate the menu bar with updated text
-        uiController.getFrame().setJMenuBar(MenuBarFactory.createMenuBar(this, scoreboardLabel));
-        refreshScoreboard();
+        uiController.getFrame().setJMenuBar(MenuBarFactory.createMenuBar(this, fileController, scoreboardController));
+        scoreboardController.refreshScoreboard();
 
         // Update history view language
         uiController.getHistoryView().updateLanguage();
@@ -251,43 +252,6 @@ public class CrosswayController {
         uiController.rebuildAfterGameChange(game, gameController::processBoardClick);
     }
 
-    /**
-     * Handles a request to change player names and reset their scores.
-     */
-    public void handleChangePlayersRequest() {
-        String[] names = dialogHandler.askPlayerNames();
-        playerManager.setPlayers(names[0], names[1]);
-        refreshScoreboard();
-    }
-
-    /** Records a win for the player currently using the given stone. */
-    public void recordWin(Stone stone) {
-        playerManager.recordWin(stone);
-        refreshScoreboard();
-    }
-
-    /** Swaps player colors. */
-    public void swapPlayerColors() {
-        playerManager.swapColors();
-        refreshScoreboard();
-    }
-
-    /** Resets both players' scores. */
-    public void resetScores() {
-        playerManager.resetScores();
-        refreshScoreboard();
-    }
-
-    /** Updates the scoreboard label with current names and scores. */
-    public void refreshScoreboard() {
-        Player black = playerManager.getPlayer(Stone.BLACK);
-        Player white = playerManager.getPlayer(Stone.WHITE);
-        scoreboardLabel.setText(Messages.format(
-                "scoreboard.format",
-                black.getName(), black.getWins(),
-                white.getName(), white.getWins()));
-    }
-
     // ==================== History & Display ====================
 
     /**
@@ -313,87 +277,6 @@ public class CrosswayController {
         gameController.handleRedoRequest();
     }
 
-    // ==================== Import/Export ====================
-
-    /**
-     * Prompts the user to save the current game state to a JSON file.
-     */
-    public void handleExportRequest() {
-        JFileChooser chooser = createJsonFileChooser(Messages.get("menu.file.export"));
-        int choice = chooser.showSaveDialog(uiController.getFrame());
-        if (choice == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = chooser.getSelectedFile();
-            executeGameExport(JsonUtils.ensureJsonExtension(selectedFile));
-        }
-    }
-
-    /**
-     * Prompts the user to load a game state from a JSON file.
-     */
-    public void handleImportRequest() {
-        JFileChooser chooser = createJsonFileChooser(Messages.get("menu.file.import"));
-        int choice = chooser.showOpenDialog(uiController.getFrame());
-        if (choice == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = chooser.getSelectedFile();
-            executeGameImport(selectedFile);
-        }
-    }
-
-    /**
-     * Creates a file chooser configured specifically for JSON files.
-     *
-     * @param title The title of the dialog.
-     * @return The configured {@link JFileChooser}.
-     */
-    private JFileChooser createJsonFileChooser(String title) {
-        JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle(title);
-        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                Messages.get("file.filter.json"), JsonUtils.JSON_EXT
-        );
-        chooser.setFileFilter(filter);
-        return chooser;
-    }
-
-    /**
-     * Loads a game from a specified JSON file and updates the game state.
-     *
-     * @param targetFile The file to import.
-     */
-    private void executeGameImport(File targetFile) {
-        try {
-            this.game = GameSerializer.load(targetFile);
-            gameController.setGame(game);
-            uiController.rebuildAfterGameChange(game, gameController::processBoardClick);
-        } catch (Exception ex) {
-            dialogHandler.showError(
-                    Messages.get("error.import.title"),
-                    Messages.format("error.import.message", ex.getMessage())
-            );
-        }
-    }
-
-    /**
-     * Saves the current game state to a JSON file.
-     *
-     * @param targetFile The destination file.
-     */
-    private void executeGameExport(File targetFile) {
-        try {
-            GameSerializer.save(game, targetFile);
-            dialogHandler.showInfo(
-                    Messages.get("export.success.title"),
-                    Messages.format("export.success.message", targetFile.getName())
-            );
-        } catch (Exception ex) {
-            dialogHandler.showError(
-                    Messages.get("error.export.title"),
-                    Messages.format("error.export.message", ex.getMessage())
-            );
-        }
-    }
-
     // ==================== Exit ====================
 
     /**
@@ -401,5 +284,12 @@ public class CrosswayController {
      */
     public void handleExitRequest() {
         System.exit(0);
+    }
+
+    /** Updates internal game reference and UI after an import or restart. */
+    private void updateGame(Game newGame) {
+        this.game = newGame;
+        gameController.setGame(newGame);
+        uiController.rebuildAfterGameChange(newGame, gameController::processBoardClick);
     }
 }
