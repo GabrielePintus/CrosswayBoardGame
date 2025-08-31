@@ -318,21 +318,7 @@ public class CrosswayController {
      * Toggles the visibility of the move history sidebar.
      */
     public void handleShowHistoryRequest() {
-        // Toggle visibility on the history view (updates min/preferred sizes)
-        historyView.toggleVisibility();
-
-        // Update the split pane's divider location based on the new visibility state.
-        if (historyView.isHistoryVisible()) {
-            showHistory();
-        } else {
-            hideHistory();
-        }
-
-        // Update the split pane to reflect the new visibility state.
-        splitPane.revalidate();
-        splitPane.repaint();
-
-        // Update the menu item text to reflect the new state.
+        splitPane.toggleHistory();
         JMenu viewMenu = frame.getJMenuBar().getMenu(1);
         JMenuItem historyItem = viewMenu.getItem(0);
         historyItem.setText(splitPane.isHistoryVisible() ? Messages.get("menu.view.hideHistory") : Messages.get("menu.view.showHistory"));
@@ -344,21 +330,7 @@ public class CrosswayController {
      * The divider is set to the preferred width of the board view.
      */
     public void showHistory() {
-        int boardPrefWidth = splitPane.getBoardView().getPreferredSize().width;
-        int dividerSize = splitPane.getDividerSize();
-        int minHistoryWidth = HistoryView.MIN_WIDTH;
-        int minTotalWidth = boardPrefWidth + dividerSize + minHistoryWidth;
-        int currentContentWidth = splitPane.getWidth();
-
-        // If not enough space for history, resize the frame
-        if (currentContentWidth < minTotalWidth) {
-            int extraNeeded = minTotalWidth - currentContentWidth;
-            Dimension currentFrameSize = frame.getSize();
-            frame.setSize(currentFrameSize.width + extraNeeded, currentFrameSize.height);
-        }
-
-        // Set divider to board preferred width; history fills the remaining space
-        splitPane.setDividerLocation(boardPrefWidth);
+        splitPane.showHistory();
     }
 
     /**
@@ -366,13 +338,7 @@ public class CrosswayController {
      * The divider is set to the full width of the split pane.
      */
     public void hideHistory() {
-        int fullWidth = splitPane.getWidth();
-        int boardWidth = splitPane.getBoardView().getPreferredSize().width;
-
-        // When hiding, collapse by setting divider to full width
-        splitPane.setDividerLocation(fullWidth);
-
-        frame.setSize(boardWidth, frame.getHeight());
+        splitPane.hideHistory();
     }
 
     /**
