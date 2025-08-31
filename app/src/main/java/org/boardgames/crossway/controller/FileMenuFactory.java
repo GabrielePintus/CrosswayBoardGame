@@ -19,15 +19,16 @@ abstract class FileMenuFactory extends MenuFactory {
      * Creates the "File" menu, including sub-menus for language selection
      * and menu items for import, export, and exit actions.
      *
-     * @param controller The controller to which menu actions are linked.
+     * @param controller The controller handling general actions like language change and exit.
+     * @param fileController Controller handling import and export requests.
      * @return The configured "File" menu.
      */
-    static JMenu createFileMenu(CrosswayController controller) {
+    static JMenu createFileMenu(CrosswayController controller, FileController fileController) {
         JMenu fileMenu = new JMenu(Messages.get("menu.file"));
         fileMenu.add(createLanguageSubmenu(controller));
         fileMenu.addSeparator();
-        fileMenu.add(createMenuItem(Messages.get("menu.file.import"), controller::handleImportRequest));
-        fileMenu.add(createMenuItem(Messages.get("menu.file.export"), controller::handleExportRequest));
+        fileMenu.add(createMenuItem(Messages.get("menu.file.import"), fileController::handleImportRequest));
+        fileMenu.add(createMenuItem(Messages.get("menu.file.export"), fileController::handleExportRequest));
         fileMenu.addSeparator();
         fileMenu.add(createMenuItem(Messages.get("menu.file.exit"), controller::handleExitRequest));
         return fileMenu;

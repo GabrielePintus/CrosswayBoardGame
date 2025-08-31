@@ -23,17 +23,21 @@ public abstract class MenuBarFactory {
      * </p>
      *
      * @param controller The main application controller that handles menu item actions.
+     * @param fileController Controller handling import/export logic.
+     * @param scoreboardController Controller managing the scoreboard display.
      * @return A {@link JMenuBar} instance ready to be set on a {@link JFrame}.
      */
-    public static JMenuBar createMenuBar(CrosswayController controller, JLabel scoreboardLabel){
-    JMenuBar menuBar = new JMenuBar();
-        menuBar.add(FileMenuFactory.createFileMenu(controller));
+    public static JMenuBar createMenuBar(CrosswayController controller,
+                                         FileController fileController,
+                                         ScoreboardController scoreboardController){
+        JMenuBar menuBar = new JMenuBar();
+        menuBar.add(FileMenuFactory.createFileMenu(controller, fileController));
         menuBar.add(ViewMenuFactory.createViewMenu(controller));
-        menuBar.add(GameMenuFactory.createGameMenu(controller));
+        menuBar.add(GameMenuFactory.createGameMenu(controller, scoreboardController));
 
         // Add a "glue" component to push the buttons to the far right.
         menuBar.add(Box.createHorizontalGlue());
-        menuBar.add(scoreboardLabel);
+        menuBar.add(scoreboardController.getScoreboardLabel());
         menuBar.add(Box.createHorizontalGlue());
         addRightAlignedButtons(menuBar, controller);
 

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.boardgames.crossway.model.rules.InvalidMoveException;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -204,5 +205,96 @@ public class GameTest {
         assertEquals(Stone.WHITE, game.getCurrentPlayer(), "Deserialized current player should match");
         assertTrue(game.isPieAvailable(), "Deserialized pie available should match");
         assertEquals(Optional.of(Stone.BLACK), game.getBoard().stoneAt(new Point(0, 0)), "Deserialized board should match");
+    }
+
+    // ===== Additional tests for rules, edge cases, and endgame =====
+
+    @Test
+    @DisplayName("canPlace returns false for occupied cell")
+    void testCanPlaceOccupied() {
+        Game game = new Game(BoardSize.SMALL);
+        Point p = new Point(0, 0);
+        game.makeMove(new Move(p, Stone.BLACK));
+        assertFalse(game.canPlace(p, Stone.WHITE), "Cannot place on occupied cell");
+    }
+
+    @Test
+    @DisplayName("canPlace returns false for out of bounds")
+    void testCanPlaceOutOfBounds() {
+        Game game = new Game(BoardSize.SMALL);
+        assertFalse(game.canPlace(new Point(-1, 0), Stone.BLACK), "Out of bounds placement is illegal");
+    }
+
+    @Test
+    @DisplayName("canPlace allows corner placement")
+    void testCanPlaceCorner() {
+        Game game = new Game(BoardSize.SMALL);
+        assertTrue(game.canPlace(new Point(0, 0), Stone.BLACK), "Corner placement should be legal");
+    }
+
+    @Test
+    @DisplayName("makeMove forbids creating diagonal X pattern")
+    void testMakeMoveDiagonalX() {
+        Board b = new Board(new BoardSize(4));
+        b.placeStone(new Point(1, 1), Stone.BLACK);
+        b.placeStone(new Point(2, 1), Stone.WHITE);
+        b.placeStone(new Point(1, 2), Stone.WHITE);
+        Game game = new Game(b);
+        Move invalid = new Move(new Point(2, 2), Stone.BLACK);
+        assertThrows(InvalidMoveException.class, () -> game.makeMove(invalid), "Diagonal X pattern must be rejected");
+        assertTrue(game.getBoard().isEmpty(new Point(2, 2)), "Invalid move must not alter the board");
+    }
+
+    @Test
+    @DisplayName("pie rule becomes unavailable after second move")
+    void testPieRuleUnavailableAfterSecondMove() {
+        Game game = new Game(BoardSize.SMALL);
+        game.makeMove(new Move(new Point(0, 0), Stone.BLACK));
+        assertTrue(game.isPieAvailable(), "Pie rule should be available after first move");
+        game.makeMove(new Move(new Point(1, 0), Stone.WHITE));
+        assertFalse(game.isPieAvailable(), "Pie rule should be disabled after second move");
+    }
+
+    @Test
+    @DisplayName("hasLegalMove is false on a full board for both players")
+    void testHasLegalMoveFullBoard() {
+        BoardSize size = new BoardSize(2);
+        Board board = new Board(size);
+        board.placeStone(new Point(0, 0), Stone.BLACK);
+        board.placeStone(new Point(0, 1), Stone.WHITE);
+        board.placeStone(new Point(1, 0), Stone.WHITE);
+        board.placeStone(new Point(1, 1), Stone.BLACK);
+        Game game = new Game(board);
+        assertFalse(game.hasLegalMove(Stone.BLACK), "Black should have no legal moves");
+        assertFalse(game.hasLegalMove(Stone.WHITE), "White should have no legal moves");
+    }
+
+    @Test
+    @DisplayName("hasLegalMove true with single empty cell then false after filling")
+    void testHasLegalMoveOneEmptyCell() {
+        Board board = new Board(new BoardSize(3));
+        for (int x = 0; x < 3; x++) {
+            for (int y = 0; y < 3; y++) {
+                if (!(x == 0 && y == 0)) {
+                    board.placeStone(new Point(x, y), Stone.WHITE);
+                }
+            }
+        }
+        Game game = new Game(board);
+        assertTrue(game.hasLegalMove(Stone.BLACK), "Black should have one legal move");
+        game.makeMove(new Move(new Point(0, 0), Stone.BLACK));
+        assertFalse(game.hasLegalMove(Stone.WHITE), "White should have no moves on full board");
+    }
+
+    @Test
+    @DisplayName("sequence of moves results in win detection")
+    void testSequenceLeadsToWin() {
+        Game game = new Game(new BoardSize(3));
+        game.makeMove(new Move(new Point(1, 0), Stone.BLACK));
+        game.makeMove(new Move(new Point(0, 0), Stone.WHITE));
+        game.makeMove(new Move(new Point(1, 1), Stone.BLACK));
+        game.makeMove(new Move(new Point(0, 1), Stone.WHITE));
+        game.makeMove(new Move(new Point(1, 2), Stone.BLACK));
+        assertTrue(game.hasWon(Stone.BLACK), "Black should win with vertical path");
     }
 }
