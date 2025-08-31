@@ -7,12 +7,13 @@ available in the [Rules.md](Rules.md) file.
 ## 📁 Project Structure
 
 ```
-crossway/
-├── model/         # Game logic and board rules
-├── ui/            # User interface(s) (Swing and CLI)
-├── controller/    # Input handling and game flow
-├── Main.java      # Entry point
-└── build.gradle   # Build configuration
+app/
+└── src/main/java/org/boardgames/crossway/
+    ├── App.java       # Entry point
+    ├── controller/    # Input handling and game flow
+    ├── model/         # Game logic and board rules
+    ├── ui/            # User interface components
+    └── utils/         # Helper utilities
 ```
 
 ## Run the Application
@@ -37,24 +38,17 @@ You can run the application in two ways: using the pre-built binary or building 
 
 ### Build from source
 
-1. Ensure you have [Gradle](https://gradle.org/install/) installed.
-2. Clone the repository:
+1. Ensure you have a Java Development Kit (JDK) installed.
+2. Clone the repository and navigate to the project directory:
    ```bash
    git clone https://github.com/GabrielePintus/CrosswayBoardGame.git
-   ```
-3. Navigate to the project directory:
-   ```bash
    cd CrosswayBoardGame
    ```
-4. Build and Run the application:
-   1. On Windows:
-      ```bash
-      .\gradlew.bat run
-      ```
-    2. On Linux/Mac:
-        ```bash
-        ./gradlew run
-        ```
+3. Build and run the application using the Gradle wrapper (Kotlin DSL):
+   ```bash
+   ./gradlew run
+   ```
+   On Windows use `gradlew.bat run`.
 
 ## Contributing
 Contributions are welcome! If you find a bug or have a feature request, please open an issue or submit a pull request.  
@@ -71,4 +65,4 @@ For larger changes, please discuss them first by opening an issue to avoid confl
 - [ ] Implement an AI opponent for single-player mode.
 
 ## License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

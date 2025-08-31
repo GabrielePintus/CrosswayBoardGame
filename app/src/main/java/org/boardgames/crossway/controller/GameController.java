@@ -92,7 +92,7 @@ public class GameController {
         }
 
         if (game.isPieAvailable() && gameEvents.showPieDialog()) {
-            game.swapColors();
+            game.disablePieRule();
             scoreboardController.swapPlayerColors();
             gameEvents.refreshHistory(game.getMoveHistory());
             gameEvents.refreshWindow();

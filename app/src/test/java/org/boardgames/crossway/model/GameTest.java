@@ -2,17 +2,28 @@ package org.boardgames.crossway.model;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
 import org.boardgames.crossway.model.rules.InvalidMoveException;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for Game class.
+ * Unit tests for the {@link Game} class, covering its core functionalities from initialization
+ * and move management to game rules, state persistence, and win condition checks.
  */
 public class GameTest {
 
+    /**
+     * Tests the {@link Game#Game(Board)} constructor.
+     * Verifies that the game is initialized with the provided board, the correct starting player (BLACK),
+     * and a clean state (empty history, pie rule unavailable).
+     */
     @Test
     @DisplayName("constructor with board sets defaults")
     void testConstructorWithBoard() {
@@ -24,6 +35,10 @@ public class GameTest {
         assertTrue(game.getMoveHistory().isEmpty(), "Move history should be empty initially");
     }
 
+    /**
+     * Tests the {@link Game#Game(Board)} constructor with a null board.
+     * Verifies that it throws an {@link IllegalArgumentException}.
+     */
     @Test
     @DisplayName("constructor throws exception for null board")
     void testConstructorNullBoard() {
@@ -31,6 +46,10 @@ public class GameTest {
                 "Constructor should throw IllegalArgumentException for null board");
     }
 
+    /**
+     * Tests the {@link Game#Game(BoardSize)} constructor.
+     * Verifies that it correctly creates a board of the specified size.
+     */
     @Test
     @DisplayName("constructor with board size creates correct board")
     void testConstructorWithBoardSize() {
@@ -38,6 +57,10 @@ public class GameTest {
         assertEquals(9, game.getBoard().getSize().size(), "Board size should match the provided");
     }
 
+    /**
+     * Tests the {@link Game#addBoardChangeListener(BoardChangeListener)} method.
+     * Verifies that a registered listener is notified when the board state changes, such as after a move.
+     */
     @Test
     @DisplayName("addBoardChangeListener notifies on change")
     void testAddBoardChangeListener() {
@@ -48,6 +71,11 @@ public class GameTest {
         assertTrue(called.get(), "Listener should be notified after board change");
     }
 
+    /**
+     * Tests the {@link Game#makeMove(Move)} method with a valid move.
+     * Verifies that the stone is placed on the board, the current player switches, the pie rule becomes available,
+     * and the move is recorded in the history.
+     */
     @Test
     @DisplayName("makeMove places stone and switches player")
     void testMakeMoveValid() {
@@ -61,6 +89,11 @@ public class GameTest {
         assertEquals(1, game.getMoveHistory().size(), "History should have one move");
     }
 
+    /**
+     * Tests the {@link Game#makeMove(Move)} method's handling of an attempt to place a stone
+     * on an already occupied cell.
+     * Verifies that it throws an {@link IllegalArgumentException}.
+     */
     @Test
     @DisplayName("makeMove throws exception for occupied cell")
     void testMakeMoveOccupied() {
@@ -72,6 +105,11 @@ public class GameTest {
                 "makeMove should throw IllegalArgumentException for occupied cell");
     }
 
+    /**
+     * Tests the {@link Game#makeMove(Move)} method's handling of an attempt to place a stone
+     * out of the board's bounds.
+     * Verifies that it throws an {@link IllegalArgumentException}.
+     */
     @Test
     @DisplayName("makeMove throws exception for out of bounds")
     void testMakeMoveOutOfBounds() {
@@ -82,6 +120,10 @@ public class GameTest {
                 "makeMove should throw IllegalArgumentException for out of bounds");
     }
 
+    /**
+     * Tests the {@link Game#skipTurn()} method.
+     * Verifies that the current player is switched without any stone placement.
+     */
     @Test
     @DisplayName("skipTurn switches player")
     void testSkipTurn() {
@@ -90,6 +132,10 @@ public class GameTest {
         assertEquals(Stone.WHITE, game.getCurrentPlayer(), "Player should switch after skip");
     }
 
+    /**
+     * Tests the {@link Game#undoLastMove()} method.
+     * Verifies that the board state and current player are correctly reverted to the state before the last move.
+     */
     @Test
     @DisplayName("undoLastMove reverts state")
     void testUndoLastMove() {
@@ -104,6 +150,10 @@ public class GameTest {
         assertTrue(game.getMoveHistory().isEmpty(), "History should be empty after undo");
     }
 
+    /**
+     * Tests the {@link Game#undoLastMove()} method when the history is empty.
+     * Verifies that it throws an {@link IllegalStateException}.
+     */
     @Test
     @DisplayName("undoLastMove throws exception when no moves")
     void testUndoNoMoves() {
@@ -112,6 +162,10 @@ public class GameTest {
                 "undoLastMove should throw IllegalStateException when no moves");
     }
 
+    /**
+     * Tests the {@link Game#redoLastMove()} method.
+     * Verifies that a previously undone move is correctly reapplied, and the game state is restored.
+     */
     @Test
     @DisplayName("redoLastMove reapplies state")
     void testRedoLastMove() {
@@ -126,6 +180,10 @@ public class GameTest {
         assertTrue(game.isPieAvailable(), "Pie rule should update after redo");
     }
 
+    /**
+     * Tests the {@link Game#redoLastMove()} method when there are no moves to redo.
+     * Verifies that it throws an {@link IllegalStateException}.
+     */
     @Test
     @DisplayName("redoLastMove throws exception when no redo available")
     void testRedoNoMoves() {
@@ -134,28 +192,10 @@ public class GameTest {
                 "redoLastMove should throw IllegalStateException when no redo");
     }
 
-    @Test
-    @DisplayName("swapColors keeps stones and switches current player")
-    void testSwapColors() {
-        Game game = new Game(BoardSize.SMALL);
-        Move move = new Move(new Point(0, 0), Stone.BLACK);
-        game.makeMove(move);
-        game.swapColors();
-        assertEquals(Optional.of(Stone.BLACK), game.getBoard().stoneAt(new Point(0, 0)), "Stones should remain unchanged");
-        assertEquals(Stone.WHITE, game.getCurrentPlayer(), "Turn should switch to white after swap");
-        assertFalse(game.isPieAvailable(), "Pie rule should be disabled after swap");
-    }
-
-    @Test
-    @DisplayName("swapColors leaves current player unchanged")
-    void testSwapColorsKeepsCurrentPlayer() {
-        Game game = new Game(BoardSize.SMALL);
-        game.makeMove(new Move(new Point(0, 0), Stone.BLACK));
-        Stone playerBeforeSwap = game.getCurrentPlayer();
-        game.swapColors();
-        assertEquals(playerBeforeSwap, game.getCurrentPlayer(), "Current player should remain the same after swap");
-    }
-
+    /**
+     * Tests the {@link Game#hasWon(Stone)} method at the start of the game.
+     * Verifies that no player has won on an empty board.
+     */
     @Test
     @DisplayName("hasWon returns false initially")
     void testHasWonFalse() {
@@ -164,6 +204,10 @@ public class GameTest {
         assertFalse(game.hasWon(Stone.WHITE), "No win for WHITE initially");
     }
 
+    /**
+     * Tests the {@link Game#hasWon(Stone)} method for a winning condition for the BLACK stone.
+     * Verifies that a continuous path of BLACK stones from the top to the bottom of the board is correctly detected as a win.
+     */
     @Test
     @DisplayName("hasWon returns true for BLACK connected north to south")
     void testHasWonBlack() {
@@ -175,6 +219,10 @@ public class GameTest {
         assertTrue(game.hasWon(Stone.BLACK), "BLACK should win with vertical connection");
     }
 
+    /**
+     * Tests the {@link Game#hasWon(Stone)} method for a winning condition for the WHITE stone.
+     * Verifies that a continuous path of WHITE stones from the left to the right of the board is correctly detected as a win.
+     */
     @Test
     @DisplayName("hasWon returns true for WHITE connected west to east")
     void testHasWonWhite() {
@@ -186,6 +234,10 @@ public class GameTest {
         assertTrue(game.hasWon(Stone.WHITE), "WHITE should win with horizontal connection");
     }
 
+    /**
+     * Tests the serialization functionality of the {@link Game#toJson()} method.
+     * Verifies that the resulting JSON string contains key game state information.
+     */
     @Test
     @DisplayName("toJson serializes game state")
     void testToJson() {
@@ -197,6 +249,10 @@ public class GameTest {
         assertTrue(json.contains("\"pieAvailable\":true"), "JSON should contain pie available");
     }
 
+    /**
+     * Tests the deserialization functionality of the {@link Game#fromJson(String)} method.
+     * Verifies that a game object created from a JSON string correctly restores the game state.
+     */
     @Test
     @DisplayName("fromJson deserializes game state")
     void testFromJson() {
@@ -209,6 +265,10 @@ public class GameTest {
 
     // ===== Additional tests for rules, edge cases, and endgame =====
 
+    /**
+     * Tests the {@link Game#canPlace(Point, Stone)} method for an occupied cell.
+     * Verifies that placing a stone on an occupied cell is correctly identified as an illegal move.
+     */
     @Test
     @DisplayName("canPlace returns false for occupied cell")
     void testCanPlaceOccupied() {
@@ -218,6 +278,10 @@ public class GameTest {
         assertFalse(game.canPlace(p, Stone.WHITE), "Cannot place on occupied cell");
     }
 
+    /**
+     * Tests the {@link Game#canPlace(Point, Stone)} method for a point outside the board boundaries.
+     * Verifies that such a placement is correctly identified as illegal.
+     */
     @Test
     @DisplayName("canPlace returns false for out of bounds")
     void testCanPlaceOutOfBounds() {
@@ -225,6 +289,10 @@ public class GameTest {
         assertFalse(game.canPlace(new Point(-1, 0), Stone.BLACK), "Out of bounds placement is illegal");
     }
 
+    /**
+     * Tests the {@link Game#canPlace(Point, Stone)} method for a valid corner placement.
+     * Verifies that a move to a corner is initially legal.
+     */
     @Test
     @DisplayName("canPlace allows corner placement")
     void testCanPlaceCorner() {
@@ -232,6 +300,10 @@ public class GameTest {
         assertTrue(game.canPlace(new Point(0, 0), Stone.BLACK), "Corner placement should be legal");
     }
 
+    /**
+     * Tests the rule that forbids creating a diagonal X pattern of stones.
+     * Verifies that an attempt to make a move that would form this pattern results in an {@link InvalidMoveException}.
+     */
     @Test
     @DisplayName("makeMove forbids creating diagonal X pattern")
     void testMakeMoveDiagonalX() {
@@ -245,6 +317,10 @@ public class GameTest {
         assertTrue(game.getBoard().isEmpty(new Point(2, 2)), "Invalid move must not alter the board");
     }
 
+    /**
+     * Tests the availability of the pie rule.
+     * Verifies that the pie rule is only available after the first move and is disabled thereafter.
+     */
     @Test
     @DisplayName("pie rule becomes unavailable after second move")
     void testPieRuleUnavailableAfterSecondMove() {
@@ -255,6 +331,10 @@ public class GameTest {
         assertFalse(game.isPieAvailable(), "Pie rule should be disabled after second move");
     }
 
+    /**
+     * Tests the {@link Game#hasLegalMove(Stone)} method on a full board.
+     * Verifies that no legal moves exist for either player when the board is completely filled.
+     */
     @Test
     @DisplayName("hasLegalMove is false on a full board for both players")
     void testHasLegalMoveFullBoard() {
@@ -269,23 +349,115 @@ public class GameTest {
         assertFalse(game.hasLegalMove(Stone.WHITE), "White should have no legal moves");
     }
 
+    /**
+     * Tests the {@link Game#hasLegalMove(Stone)} method with a single empty cell.
+     * Verifies that a legal move is detected and that after that move, no further legal moves exist.
+     */
     @Test
     @DisplayName("hasLegalMove true with single empty cell then false after filling")
     void testHasLegalMoveOneEmptyCell() {
-        Board board = new Board(new BoardSize(3));
-        for (int x = 0; x < 3; x++) {
-            for (int y = 0; y < 3; y++) {
-                if (!(x == 0 && y == 0)) {
-                    board.placeStone(new Point(x, y), Stone.WHITE);
-                }
-            }
-        }
+        // Arrange
+        final BoardSize smallBoard = new BoardSize(3);
+        final Point lastEmptyPosition = new Point(0, 0);
+        final Stone fillStone = Stone.WHITE;
+        final Stone testStone = Stone.BLACK;
+
+        Board board = createAlmostFullBoard(smallBoard, lastEmptyPosition, fillStone);
         Game game = new Game(board);
-        assertTrue(game.hasLegalMove(Stone.BLACK), "Black should have one legal move");
-        game.makeMove(new Move(new Point(0, 0), Stone.BLACK));
-        assertFalse(game.hasLegalMove(Stone.WHITE), "White should have no moves on full board");
+
+        // Act & Assert - Before filling last position
+        assertTrue(game.hasLegalMove(testStone),
+                "Player should have exactly one legal move when only one cell is empty");
+
+        // Act - Fill the last empty position
+        Move finalMove = new Move(lastEmptyPosition, testStone);
+        game.makeMove(finalMove);
+
+        // Assert - After filling last position (test both players)
+        Stream.of(Stone.WHITE, Stone.BLACK)
+                .forEach(stone ->
+                        assertFalse(game.hasLegalMove(stone),
+                                stone + " should have no legal moves on completely filled board"));
     }
 
+    /**
+     * Creates a board that is completely filled except for one position.
+     *
+     * @param boardSize The size of the board to create
+     * @param emptyPosition The position to leave empty
+     * @param fillStone The stone color to use for filling all other positions
+     * @return A board with all positions filled except the specified empty position
+     */
+    private Board createAlmostFullBoard(BoardSize boardSize, Point emptyPosition, Stone fillStone) {
+        Board board = new Board(boardSize);
+
+        getAllBoardPositions(boardSize)
+                .stream()
+                .filter(position -> !position.equals(emptyPosition))
+                .forEach(position -> board.placeStone(position, fillStone));
+
+        return board;
+    }
+
+    /**
+     * Generates all valid positions on a board of the given size.
+     *
+     * @param boardSize The size of the board
+     * @return A list of all positions on the board
+     */
+    private List<Point> getAllBoardPositions(BoardSize boardSize) {
+        int size = boardSize.size();
+        List<Point> positions = new ArrayList<>();
+
+        for (int x = 0; x < size; x++) {
+            for (int y = 0; y < size; y++) {
+                positions.add(new Point(x, y));
+            }
+        }
+
+        return positions;
+    }
+
+    /**
+     * Creates a board that is completely filled except for one position.
+     * Alternative implementation using streams for a more functional approach.
+     */
+    private Board createAlmostFullBoardStreams(BoardSize boardSize, Point emptyPosition, Stone fillStone) {
+        Board board = new Board(boardSize);
+        int size = boardSize.size();
+
+        IntStream.range(0, size)
+                .boxed()
+                .flatMap(x -> IntStream.range(0, size)
+                        .mapToObj(y -> new Point(x, y)))
+                .filter(position -> !position.equals(emptyPosition))
+                .forEach(position -> board.placeStone(position, fillStone));
+
+        return board;
+    }
+
+    /**
+     * Creates a board that is completely filled except for one position.
+     * Uses enhanced for-each loops for better readability.
+     */
+    private Board createAlmostFullBoardEnhanced(BoardSize boardSize, Point emptyPosition, Stone fillStone) {
+        Board board = new Board(boardSize);
+        List<Point> allPositions = getAllBoardPositions(boardSize);
+
+        for (Point position : allPositions) {
+            if (!position.equals(emptyPosition)) {
+                board.placeStone(position, fillStone);
+            }
+        }
+
+        return board;
+    }
+
+
+    /**
+     * Tests a sequence of moves that leads to a win.
+     * Verifies that the {@link Game#hasWon(Stone)} method correctly identifies the winning condition after a series of valid moves.
+     */
     @Test
     @DisplayName("sequence of moves results in win detection")
     void testSequenceLeadsToWin() {

@@ -1,14 +1,12 @@
 package org.boardgames.crossway.controller;
 
 import org.boardgames.crossway.model.*;
-import org.boardgames.crossway.utils.GameSerializer;
-import org.boardgames.crossway.utils.JsonUtils;
+import org.boardgames.crossway.ui.SwingScoreboardView;
 import org.boardgames.crossway.utils.Messages;
 import org.boardgames.crossway.utils.Settings;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import java.io.File;
+import java.awt.*;
 import java.util.Locale;
 
 /**
@@ -77,11 +75,17 @@ public class CrosswayController {
      */
     private final DialogHandler dialogHandler;
 
+    /** Prompts the user for board size selections. */
+    private final BoardSizePrompt boardSizePrompt;
+
     /** Handles file import and export operations. */
     private final FileController fileController;
 
     /** Manages the scoreboard and player information. */
     private final ScoreboardController scoreboardController;
+
+    /** Callback executed when the application exit is requested. */
+    private final Runnable exitCallback;
 
     /**
      * The current dimension of the square board.
@@ -93,17 +97,18 @@ public class CrosswayController {
     /**
      * Constructs a new controller with the default board size (Regular).
      */
-    public CrosswayController() {
-        this(BoardSize.REGULAR);
+    public CrosswayController(Runnable exitCallback) {
+        this(BoardSize.REGULAR.toInt(), null, exitCallback);
     }
 
     /**
      * Constructs a new controller with a predefined board size.
      *
      * @param size The preset {@link BoardSize} to use.
+     * @param exitCallback Callback executed when the application exit is requested.
      */
-    public CrosswayController(BoardSize size) {
-        this(size.toInt());
+    public CrosswayController(BoardSize size, Runnable exitCallback) {
+        this(size.toInt(), null, exitCallback);
     }
 
     /**
@@ -112,26 +117,39 @@ public class CrosswayController {
      * @param boardSize The dimension of the board (cells per side).
      * @throws IllegalArgumentException if the size is too small (less than 3).
      */
-    public CrosswayController(int boardSize) {
+    public CrosswayController(int boardSize, BoardSizePrompt prompt, Runnable exitCallback) {
         validateBoardSize(boardSize);
         this.boardSize = boardSize;
+        this.exitCallback = exitCallback;
         this.game = new Game(new BoardSize(boardSize));
-        this.uiController = new UiController(this, game);
-        this.dialogHandler = new DialogHandler(uiController.getFrame());
-        uiController.setDialogHandler(dialogHandler);
-        String[] names = dialogHandler.askPlayerNames();
-        this.scoreboardController = new ScoreboardController(names[0], names[1], new JLabel(), dialogHandler);
-        this.fileController = new FileController(() -> game, this::updateGame, uiController, dialogHandler);
-        this.gameController = new GameController(
-                game,
-                uiController,
-                this::handleNewGameRequest,
-                this::handleRestartRequest,
-                this::handleExitRequest,
-                scoreboardController);
-        uiController.getFrame().setJMenuBar(MenuBarFactory.createMenuBar(this, fileController, scoreboardController));
-        uiController.refreshWindow();
-        attachEventHandlers();
+
+        if (!GraphicsEnvironment.isHeadless()) {
+            this.uiController = new UiController(this, game);
+            this.dialogHandler = new DialogHandler(uiController.getFrame());
+            uiController.setDialogHandler(dialogHandler);
+            String[] names = dialogHandler.askPlayerNames();
+            SwingScoreboardView scoreboardView = new SwingScoreboardView();
+            this.scoreboardController = new ScoreboardController(names[0], names[1], scoreboardView, dialogHandler);
+            this.fileController = new FileController(() -> game, this::updateGame, uiController, dialogHandler);
+            this.gameController = new GameController(
+                    game,
+                    uiController,
+                    this::handleNewGameRequest,
+                    this::handleRestartRequest,
+                    this::handleExitRequest,
+                    scoreboardController);
+            uiController.getFrame().setJMenuBar(MenuBarFactory.createMenuBar(this, fileController, scoreboardController));
+            uiController.refreshWindow();
+            attachEventHandlers();
+            this.boardSizePrompt = prompt != null ? prompt : dialogHandler;
+        } else {
+            this.uiController = null;
+            this.dialogHandler = null;
+            this.fileController = null;
+            this.gameController = null;
+            this.scoreboardController = null;
+            this.boardSizePrompt = prompt;
+        }
     }
 
     // ==================== Initialization ====================
@@ -180,6 +198,15 @@ public class CrosswayController {
         uiController.getBoardView().setBoardClickCallback(gameController::processBoardClick);
     }
 
+    /**
+     * Injects the menu item used to toggle the history view into the UI controller.
+     *
+     * @param historyMenuItem the menu item created by the menu factory
+     */
+    public void setHistoryMenuItem(JMenuItem historyMenuItem) {
+        uiController.setHistoryMenuItem(historyMenuItem);
+    }
+
     // ==================== Menu Actions ====================
 
     /**
@@ -200,13 +227,7 @@ public class CrosswayController {
      * @return The index of the selected option, or -1 if the dialog was cancelled.
      */
     private int promptForBoardSize() {
-        return JOptionPane.showOptionDialog(
-                uiController.getFrame(),
-                Messages.get("menu.game.selectBoardSize"),
-                Messages.get("menu.game.new"),
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.QUESTION_MESSAGE,
-                null,
+        return boardSizePrompt.promptForBoardSize(
                 BOARD_SIZE_OPTIONS,
                 BOARD_SIZE_OPTIONS[DEFAULT_SIZE_INDEX]
         );
@@ -246,10 +267,12 @@ public class CrosswayController {
     /**
      * Resets the game to its initial state using the current board size.
      */
-    private void executeGameRestart() {
+    protected void executeGameRestart() {
         this.game = new Game(new BoardSize(boardSize));
-        gameController.setGame(game);
-        uiController.rebuildAfterGameChange(game, gameController::processBoardClick);
+        if (gameController != null && uiController != null) {
+            gameController.setGame(game);
+            uiController.rebuildAfterGameChange(game, gameController::processBoardClick);
+        }
     }
 
     // ==================== History & Display ====================
@@ -283,7 +306,7 @@ public class CrosswayController {
      * Handles the request to exit the application.
      */
     public void handleExitRequest() {
-        System.exit(0);
+        exitCallback.run();
     }
 
     /** Updates internal game reference and UI after an import or restart. */

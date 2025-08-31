@@ -5,10 +5,15 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for BoardSize class.
+ * Unit tests for the {@link BoardSize} record, verifying its immutability and
+ * the correctness of its utility methods for validating coordinates.
  */
 public class BoardSizeTest {
 
+    /**
+     * Tests the {@link BoardSize#size()} method.
+     * Verifies that it returns the correct dimension of the board.
+     */
     @Test
     @DisplayName("size() returns the correct dimension")
     void testSizeMethod() {
@@ -16,6 +21,10 @@ public class BoardSizeTest {
         assertEquals(6, size.size(), "size() should return the constructor value");
     }
 
+    /**
+     * Tests the {@link BoardSize#isInBounds(Point)} method with points that are
+     * within the board's boundaries, including corner points.
+     */
     @Test
     @DisplayName("isInBounds detects points inside the board")
     void testIsInBoundsValid() {
@@ -25,6 +34,10 @@ public class BoardSizeTest {
         assertTrue(size.isInBounds(new Point(2, 1)), "(2,1) should be in bounds");
     }
 
+    /**
+     * Tests the {@link BoardSize#isInBounds(Point)} method with points that are
+     * outside the board's boundaries.
+     */
     @Test
     @DisplayName("isInBounds detects points outside the board")
     void testIsInBoundsInvalid() {
@@ -35,6 +48,10 @@ public class BoardSizeTest {
         assertFalse(size.isInBounds(new Point(2, 4)), "(2,4) should be out of bounds");
     }
 
+    /**
+     * Tests the {@link BoardSize#toInt()} method.
+     * Verifies that it correctly returns the board size as an integer.
+     */
     @Test
     @DisplayName("toInt returns the board size as an integer")
     void testToInt() {

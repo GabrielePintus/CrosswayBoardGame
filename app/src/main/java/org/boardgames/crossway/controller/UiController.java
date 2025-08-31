@@ -39,6 +39,8 @@ public class UiController implements GameEvents {
     private HistoryView historyView;
     /** Handles user dialogs such as warnings and confirmations. */
     private DialogHandler dialogHandler;
+    /** Menu item used to toggle the visibility of the move history. */
+    private JMenuItem historyMenuItem;
 
     /**
      * Constructs a new {@code UiController}, initializing the UI components and setting up the user interface.
@@ -59,6 +61,16 @@ public class UiController implements GameEvents {
     public void setDialogHandler(DialogHandler dialogHandler) {
         this.dialogHandler = dialogHandler;
     }
+
+    /**
+     * Injects the menu item responsible for toggling the history panel.
+     *
+     * @param historyMenuItem the menu item to update when the history visibility changes
+     */
+    public void setHistoryMenuItem(JMenuItem historyMenuItem) {
+        this.historyMenuItem = historyMenuItem;
+    }
+
 
     /**
      * Initializes the UI components, creating new ones if they don't exist and
@@ -90,8 +102,6 @@ public class UiController implements GameEvents {
         frame.pack();
         splitPane.setDividerLocation(splitPane.getWidth());
         frame.setLocationRelativeTo(null);
-//        frame.revalidate();
-//        frame.repaint();
         frame.setVisible(true);
     }
 
@@ -145,9 +155,7 @@ public class UiController implements GameEvents {
         }
         splitPane.revalidate();
         splitPane.repaint();
-        JMenu viewMenu = frame.getJMenuBar().getMenu(1);
-        JMenuItem historyItem = viewMenu.getItem(0);
-        historyItem.setText(splitPane.isHistoryVisible() ? Messages.get("menu.view.hideHistory") : Messages.get("menu.view.showHistory"));
+        historyMenuItem.setText(splitPane.isHistoryVisible() ? Messages.get("menu.view.hideHistory") : Messages.get("menu.view.showHistory"));
     }
 
     /**

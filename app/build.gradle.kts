@@ -21,6 +21,10 @@ dependencies {
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
+    // Add Mockito for mocking in tests
+    testImplementation("org.mockito:mockito-core:5.5.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.5.0")
+
     // This dependency is used by the application.
     implementation(libs.guava)
 
@@ -46,6 +50,8 @@ tasks.named<Test>("test") {
     testLogging {
         events("standard_error")
     }
+    // Suppress agent loading warnings for tests
+    jvmArgs("-XX:+EnableDynamicAgentLoading")
 }
 
 tasks.named<Zip>("distZip") {
@@ -63,4 +69,3 @@ tasks.withType<JavaCompile>().configureEach {
     // Also prints a summary count of deprecation warnings
     options.isDeprecation = true
 }
-
