@@ -19,7 +19,7 @@ public class HistoryView extends JPanel {
     private final JList<String> moveList;
     private final JLabel titleLabel; // Keep reference to update language
     private final DefaultListModel<String> listModel;
-    private boolean isVisible = false;
+    private boolean historyVisible = false;
 
     public HistoryView() {
         setLayout(new BorderLayout());
@@ -51,10 +51,10 @@ public class HistoryView extends JPanel {
      * Expands to show move history or collapses to hide it.
      */
     public void toggleVisibility() {
-        isVisible = !isVisible;
+        historyVisible = !historyVisible;
 
         int prefHeight = getPreferredSize().height;
-        if (isVisible) {
+        if (historyVisible) {
             setMinimumSize(new Dimension(MIN_WIDTH, 0));
             setPreferredSize(new Dimension(MIN_WIDTH, prefHeight));
         } else {
@@ -62,7 +62,7 @@ public class HistoryView extends JPanel {
             setPreferredSize(new Dimension(0, prefHeight));
         }
 
-        setVisible(isVisible);
+        setVisible(historyVisible);
 
         // Trigger parent container to revalidate
         Container parent = getParent();
@@ -78,7 +78,7 @@ public class HistoryView extends JPanel {
      * @return true if the history view is visible, false otherwise
      */
     public boolean isHistoryVisible() {
-        return isVisible;
+        return historyVisible;
     }
 
     /**
