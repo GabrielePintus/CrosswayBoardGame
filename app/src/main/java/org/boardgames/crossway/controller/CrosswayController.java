@@ -1,10 +1,6 @@
 package org.boardgames.crossway.controller;
 
 import org.boardgames.crossway.model.*;
-import org.boardgames.crossway.model.Point;
-import org.boardgames.crossway.ui.BoardHistorySplitPane;
-import org.boardgames.crossway.ui.BoardView;
-import org.boardgames.crossway.ui.HistoryView;
 import org.boardgames.crossway.utils.GameSerializer;
 import org.boardgames.crossway.utils.JsonUtils;
 import org.boardgames.crossway.utils.Messages;
@@ -12,7 +8,6 @@ import org.boardgames.crossway.utils.Settings;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.*;
 import java.io.File;
 import java.util.Locale;
 
@@ -68,34 +63,24 @@ public class CrosswayController {
     private Game game;
 
     /**
-     * The graphical view component that renders the game board.
+     * Handles all layout and frame operations.
      */
-    private BoardView view;
+    private final UiController uiController;
 
     /**
-     * The view component that displays the move history.
+     * Handles interactions with the game model.
      */
-    private HistoryView historyView;
-
-    /**
-     * The split pane that separates the board view from the history view.
-     */
-    private BoardHistorySplitPane splitPane;
-
-    /**
-     * The main application window.
-     */
-    private JFrame frame;
-
-    /**
-     * The current dimension of the square board.
-     */
-    private int boardSize;
+    private final GameController gameController;
 
     /**
      * Handler for dialog interactions, such as warnings and errors.
      */
     private final DialogHandler dialogHandler;
+
+    /**
+     * The current dimension of the square board.
+     */
+    private int boardSize;
 
     // ==================== Constructors ====================
 
@@ -124,10 +109,17 @@ public class CrosswayController {
     public CrosswayController(int boardSize) {
         validateBoardSize(boardSize);
         this.boardSize = boardSize;
-        initializeComponents();
-        setupUserInterface();
+        this.game = new Game(new BoardSize(boardSize));
+        this.uiController = new UiController(this, game);
+        this.dialogHandler = new DialogHandler(uiController.getFrame());
+        this.gameController = new GameController(
+                game,
+                uiController,
+                dialogHandler,
+                this::handleNewGameRequest,
+                this::handleRestartRequest,
+                this::handleExitRequest);
         attachEventHandlers();
-        this.dialogHandler = new DialogHandler(frame);
     }
 
     // ==================== Initialization ====================
@@ -144,42 +136,6 @@ public class CrosswayController {
         }
     }
 
-    /**
-     * Initializes all the core model and view components.
-     * This method does not yet configure their layout or relationships.
-     */
-    private void initializeComponents() {
-        game = new Game(new BoardSize(boardSize));
-        Board board = game.getBoard();
-        if (splitPane == null) {
-            splitPane = new BoardHistorySplitPane(new BoardView(board));
-            view = splitPane.getBoardView();
-            historyView = splitPane.getHistoryView();
-            game.addBoardChangeListener(view);
-        } else {
-            splitPane.replaceBoard(board);
-            view = splitPane.getBoardView();
-            historyView = splitPane.getHistoryView();
-        }
-    }
-
-    /**
-     * Builds and lays out the entire application's user interface.
-     */
-    private void setupUserInterface() {
-        frame = FrameFactory.createFrame(this);
-
-        frame.add(splitPane, BorderLayout.CENTER);
-        frame.pack();
-
-        // Start with the history view hidden by default.
-        splitPane.setDividerLocation(splitPane.getWidth());
-
-        // Set the minimum size of the frame to ensure it is usable.
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-    }
-
     // ==================== Menu Bar ====================
 
     /**
@@ -193,14 +149,13 @@ public class CrosswayController {
         Messages.setLocale(newLocale);
 
         // Recreate the menu bar with updated text
-        frame.setJMenuBar(MenuBarFactory.createMenuBar(this));
+        uiController.getFrame().setJMenuBar(MenuBarFactory.createMenuBar(this));
 
         // Update history view language
-        historyView.updateLanguage();
+        uiController.getHistoryView().updateLanguage();
 
         // Refresh the entire window to reflect language changes
-        frame.revalidate();
-        frame.repaint();
+        uiController.refreshWindow();
     }
 
     // ==================== Event Handling ====================
@@ -209,137 +164,10 @@ public class CrosswayController {
      * Attaches all necessary event listeners to the components.
      */
     private void attachEventHandlers() {
-        view.setBoardClickCallback(this::processBoardClick);
-    }
-
-    // ==================== Input Processing ====================
-
-    /**
-     * Processes a board coordinate produced from a mouse click by attempting to make a move.
-     *
-     * @param boardCoordinate The logical board position that was clicked.
-     */
-    private void processBoardClick(Point boardCoordinate) {
-        Stone currentPlayer = game.getCurrentPlayer();
-
-        if (!game.hasLegalMove(currentPlayer)) {
-            dialogHandler.showInfo(
-                    Messages.get("game.forfeit.title"),
-                    Messages.format("game.forfeit.message", currentPlayer)
-            );
-            game.skipTurn();
-            return;
-        }
-
-        if (attemptMoveExecution(boardCoordinate, currentPlayer)) {
-            if (game.isPieAvailable()) {
-                promptSwapDecision();
-            }
-            checkForGameCompletion(currentPlayer);
-        }
-    }
-
-    /**
-     * Attempts to execute a move by calling the game model.
-     *
-     * @param position The board coordinate of the move.
-     * @param player   The player making the move.
-     * @return {@code true} if the move was valid and executed, {@code false} otherwise.
-     */
-    private boolean attemptMoveExecution(Point position, Stone player) {
-        try {
-            game.makeMove(new Move(position, player));
-            updateHistoryDisplay();
-            return true;
-        } catch (IllegalArgumentException ex) {
-            dialogHandler.showWarning(Messages.get("error.invalidMove"), ex.getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Asks the player if they wish to swap colors after the opening move.
-     */
-    private void promptSwapDecision() {
-        int choice = JOptionPane.showOptionDialog(
-                frame,
-                Messages.get("game.swapPrompt"),
-                Messages.get("game.swap"),
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                new Object[]{Messages.get("game.swap"), Messages.get("game.continue")},
-                Messages.get("game.continue")
-        );
-        if (choice == JOptionPane.YES_OPTION) {
-            game.swapColors();
-            updateHistoryDisplay();
-        }
-    }
-
-    /**
-     * Checks if the current player has won the game.
-     *
-     * @param currentPlayer The player to check for a win condition.
-     */
-    private void checkForGameCompletion(Stone currentPlayer) {
-        if (game.hasWon(currentPlayer)) {
-            int choice = JOptionPane.showOptionDialog(
-                    frame,
-                    "%s %s".formatted(currentPlayer, Messages.get("game.wins")),
-                    Messages.get("game.over"),
-                    JOptionPane.DEFAULT_OPTION,
-                    JOptionPane.INFORMATION_MESSAGE,
-                    null,
-                    WIN_DIALOG_OPTIONS,
-                    WIN_DIALOG_OPTIONS[1]
-            );
-            processWinDialogChoice(choice);
-        }
-    }
-
-    /**
-     * Handles the user's choice from the win dialog.
-     *
-     * @param choice The index of the selected option.
-     */
-    private void processWinDialogChoice(int choice) {
-        switch (choice) {
-            case 0 -> handleNewGameRequest();
-            case 1 -> handleRestartRequest();
-            case 2 -> handleExitRequest();
-            default -> { /* Dialog closed */ }
-        }
+        uiController.getBoardView().setBoardClickCallback(gameController::processBoardClick);
     }
 
     // ==================== Menu Actions ====================
-
-    /**
-     * Toggles the visibility of the move history sidebar.
-     */
-    public void handleShowHistoryRequest() {
-        splitPane.toggleHistory();
-        JMenu viewMenu = frame.getJMenuBar().getMenu(1);
-        JMenuItem historyItem = viewMenu.getItem(0);
-        historyItem.setText(splitPane.isHistoryVisible() ? Messages.get("menu.view.hideHistory") : Messages.get("menu.view.showHistory"));
-    }
-
-
-    /**
-     * Displays the history view and adjusts the main window's size if necessary.
-     * The divider is set to the preferred width of the board view.
-     */
-    public void showHistory() {
-        splitPane.showHistory();
-    }
-
-    /**
-     * Hides the history view and resizes the main window to fit the board.
-     * The divider is set to the full width of the split pane.
-     */
-    public void hideHistory() {
-        splitPane.hideHistory();
-    }
 
     /**
      * Handles the request to start a new game by prompting the user for a board size.
@@ -360,7 +188,7 @@ public class CrosswayController {
      */
     private int promptForBoardSize() {
         return JOptionPane.showOptionDialog(
-                frame,
+                uiController.getFrame(),
                 Messages.get("menu.game.selectBoardSize"),
                 Messages.get("menu.game.new"),
                 JOptionPane.DEFAULT_OPTION,
@@ -406,25 +234,18 @@ public class CrosswayController {
      * Resets the game to its initial state using the current board size.
      */
     private void executeGameRestart() {
-        initializeComponents();
-        rebuildAfterGameChange();
+        this.game = new Game(new BoardSize(boardSize));
+        gameController.setGame(game);
+        uiController.rebuildAfterGameChange(game, gameController::processBoardClick);
     }
 
     // ==================== History & Display ====================
 
     /**
-     * Updates the history view with the current move history from the model.
+     * Handles the request to show or hide the game history panel.
      */
-    private void updateHistoryDisplay() {
-        historyView.updateHistory(game.getMoveHistory());
-    }
-
-    /**
-     * Revalidates and repaints the entire window.
-     */
-    private void refreshWindow() {
-        frame.revalidate();
-        frame.repaint();
+    public void handleShowHistoryRequest() {
+        uiController.handleShowHistoryRequest();
     }
 
     // ==================== Undo/Redo Actions ====================
@@ -433,30 +254,14 @@ public class CrosswayController {
      * Attempts to undo the last move in the game.
      */
     public void handleUndoRequest() {
-        try {
-            game.undoLastMove();
-            updateHistoryDisplay();
-        } catch (IllegalStateException ex) {
-            dialogHandler.showInfo(
-                    Messages.get("menu.toolbar.undo"),
-                    Messages.get("warning.toolbar.undo")
-            );
-        }
+        gameController.handleUndoRequest();
     }
 
     /**
      * Attempts to redo the last undone move.
      */
     public void handleRedoRequest() {
-        try {
-            game.redoLastMove();
-            updateHistoryDisplay();
-        } catch (IllegalStateException ex) {
-            dialogHandler.showInfo(
-                    Messages.get("menu.toolbar.redo"),
-                    Messages.get("warning.toolbar.redo")
-            );
-        }
+        gameController.handleRedoRequest();
     }
 
     // ==================== Import/Export ====================
@@ -466,7 +271,7 @@ public class CrosswayController {
      */
     public void handleExportRequest() {
         JFileChooser chooser = createJsonFileChooser(Messages.get("menu.file.export"));
-        int choice = chooser.showSaveDialog(frame);
+        int choice = chooser.showSaveDialog(uiController.getFrame());
         if (choice == JFileChooser.APPROVE_OPTION) {
             File selectedFile = chooser.getSelectedFile();
             executeGameExport(JsonUtils.ensureJsonExtension(selectedFile));
@@ -478,7 +283,7 @@ public class CrosswayController {
      */
     public void handleImportRequest() {
         JFileChooser chooser = createJsonFileChooser(Messages.get("menu.file.import"));
-        int choice = chooser.showOpenDialog(frame);
+        int choice = chooser.showOpenDialog(uiController.getFrame());
         if (choice == JFileChooser.APPROVE_OPTION) {
             File selectedFile = chooser.getSelectedFile();
             executeGameImport(selectedFile);
@@ -510,7 +315,8 @@ public class CrosswayController {
     private void executeGameImport(File targetFile) {
         try {
             this.game = GameSerializer.load(targetFile);
-            rebuildAfterGameChange();
+            gameController.setGame(game);
+            uiController.rebuildAfterGameChange(game, gameController::processBoardClick);
         } catch (Exception ex) {
             dialogHandler.showError(
                     Messages.get("error.import.title"),
@@ -538,29 +344,6 @@ public class CrosswayController {
             );
         }
     }
-
-    /**
-     * Rebuilds the user interface and reattaches event handlers after a
-     * significant game state change (e.g., import or restart).
-     */
-    private void rebuildAfterGameChange() {
-        // Replace the board view with one bound to the new game model.
-        splitPane.replaceBoard(this.game.getBoard());
-
-        // Update the reference to the new view and re-attach handlers.
-        this.view = splitPane.getBoardView();
-        game.addBoardChangeListener(view);
-        attachEventHandlers(); // Re-attach the click handler to the new view instance.
-
-        // Sync history and UI display.
-        updateHistoryDisplay();
-
-        // Pack the frame and maintain the divider's position.
-        frame.pack();
-
-        refreshWindow();
-    }
-
 
     // ==================== Exit ====================
 
