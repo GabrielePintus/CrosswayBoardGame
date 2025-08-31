@@ -118,12 +118,12 @@ public class CrosswayController {
         this.game = new Game(new BoardSize(boardSize));
         this.uiController = new UiController(this, game, scoreboardLabel);
         this.dialogHandler = new DialogHandler(uiController.getFrame());
+        uiController.setDialogHandler(dialogHandler);
         String[] names = dialogHandler.askPlayerNames();
         this.playerManager = new PlayerManager(names[0], names[1]);
         this.gameController = new GameController(
                 game,
                 uiController,
-                dialogHandler,
                 this::handleNewGameRequest,
                 this::handleRestartRequest,
                 this::handleExitRequest,
