@@ -99,15 +99,60 @@ public class BoardHistorySplitPane extends JSplitPane {
      * Adjusts the divider location accordingly.
      */
     public void toggleHistory() {
-        historyView.toggleVisibility();
         if (historyView.isHistoryVisible()) {
-            // Calculate and set divider for shown state
-            int preferredBoardWidth = boardView.getPreferredSize().width;
-            setDividerLocation(preferredBoardWidth);
+            hideHistory();
         } else {
-            // Hide by moving divider to end
-            setDividerLocation(getWidth());
+            showHistory();
         }
+    }
+
+    /**
+     * Displays the history view and resizes the containing frame if necessary.
+     * The divider is positioned at the preferred width of the board view.
+     */
+    public void showHistory() {
+        if (!historyView.isHistoryVisible()) {
+            historyView.toggleVisibility();
+        }
+
+        int boardPrefWidth = boardView.getPreferredSize().width;
+        int dividerSize = getDividerSize();
+        int minHistoryWidth = HistoryView.MIN_WIDTH;
+        int minTotalWidth = boardPrefWidth + dividerSize + minHistoryWidth;
+        int currentContentWidth = getWidth();
+
+        if (currentContentWidth < minTotalWidth) {
+            int extraNeeded = minTotalWidth - currentContentWidth;
+            Window window = SwingUtilities.getWindowAncestor(this);
+            if (window != null) {
+                Dimension frameSize = window.getSize();
+                window.setSize(frameSize.width + extraNeeded, frameSize.height);
+            }
+        }
+
+        setDividerLocation(boardPrefWidth);
+        revalidate();
+        repaint();
+    }
+
+    /**
+     * Hides the history view and resizes the containing frame to fit the board.
+     * The divider is set to the full width of the split pane.
+     */
+    public void hideHistory() {
+        if (historyView.isHistoryVisible()) {
+            historyView.toggleVisibility();
+        }
+
+        setDividerLocation(getWidth());
+
+        Window window = SwingUtilities.getWindowAncestor(this);
+        if (window != null) {
+            int boardWidth = boardView.getPreferredSize().width;
+            Dimension frameSize = window.getSize();
+            window.setSize(boardWidth, frameSize.height);
+        }
+
         revalidate();
         repaint();
     }
