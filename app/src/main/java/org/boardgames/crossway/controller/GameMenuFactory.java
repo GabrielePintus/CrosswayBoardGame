@@ -24,6 +24,7 @@ abstract class GameMenuFactory extends MenuFactory {
         JMenu gameMenu = new JMenu(Messages.get("menu.game"));
         gameMenu.add(createMenuItem(Messages.get("menu.game.new"), controller::handleNewGameRequest));
         gameMenu.add(createMenuItem(Messages.get("menu.game.restart"), controller::handleRestartRequest));
+        gameMenu.add(createMenuItem(Messages.get("menu.game.changePlayers"), controller::handleChangePlayersRequest));
         return gameMenu;
     }
 }

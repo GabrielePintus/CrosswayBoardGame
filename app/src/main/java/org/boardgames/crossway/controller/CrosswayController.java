@@ -77,6 +77,12 @@ public class CrosswayController {
      */
     private final DialogHandler dialogHandler;
 
+    /** Manages player names, colors and scores. */
+    private final PlayerManager playerManager;
+
+    /** Label displayed in the menu bar showing the current scoreboard. */
+    private final JLabel scoreboardLabel = new JLabel();
+
     /**
      * The current dimension of the square board.
      */
@@ -110,16 +116,21 @@ public class CrosswayController {
         validateBoardSize(boardSize);
         this.boardSize = boardSize;
         this.game = new Game(new BoardSize(boardSize));
-        this.uiController = new UiController(this, game);
+        this.uiController = new UiController(this, game, scoreboardLabel);
         this.dialogHandler = new DialogHandler(uiController.getFrame());
+        String[] names = dialogHandler.askPlayerNames();
+        this.playerManager = new PlayerManager(names[0], names[1]);
         this.gameController = new GameController(
                 game,
                 uiController,
                 dialogHandler,
                 this::handleNewGameRequest,
                 this::handleRestartRequest,
-                this::handleExitRequest);
+                this::handleExitRequest,
+                playerManager,
+                this::refreshScoreboard);
         attachEventHandlers();
+        refreshScoreboard();
     }
 
     // ==================== Initialization ====================
@@ -149,7 +160,8 @@ public class CrosswayController {
         Messages.setLocale(newLocale);
 
         // Recreate the menu bar with updated text
-        uiController.getFrame().setJMenuBar(MenuBarFactory.createMenuBar(this));
+        uiController.getFrame().setJMenuBar(MenuBarFactory.createMenuBar(this, scoreboardLabel));
+        refreshScoreboard();
 
         // Update history view language
         uiController.getHistoryView().updateLanguage();
@@ -237,6 +249,43 @@ public class CrosswayController {
         this.game = new Game(new BoardSize(boardSize));
         gameController.setGame(game);
         uiController.rebuildAfterGameChange(game, gameController::processBoardClick);
+    }
+
+    /**
+     * Handles a request to change player names and reset their scores.
+     */
+    public void handleChangePlayersRequest() {
+        String[] names = dialogHandler.askPlayerNames();
+        playerManager.setPlayers(names[0], names[1]);
+        refreshScoreboard();
+    }
+
+    /** Records a win for the player currently using the given stone. */
+    public void recordWin(Stone stone) {
+        playerManager.recordWin(stone);
+        refreshScoreboard();
+    }
+
+    /** Swaps player colors. */
+    public void swapPlayerColors() {
+        playerManager.swapColors();
+        refreshScoreboard();
+    }
+
+    /** Resets both players' scores. */
+    public void resetScores() {
+        playerManager.resetScores();
+        refreshScoreboard();
+    }
+
+    /** Updates the scoreboard label with current names and scores. */
+    public void refreshScoreboard() {
+        Player black = playerManager.getPlayer(Stone.BLACK);
+        Player white = playerManager.getPlayer(Stone.WHITE);
+        scoreboardLabel.setText(Messages.format(
+                "scoreboard.format",
+                black.getName(), black.getWins(),
+                white.getName(), white.getWins()));
     }
 
     // ==================== History & Display ====================

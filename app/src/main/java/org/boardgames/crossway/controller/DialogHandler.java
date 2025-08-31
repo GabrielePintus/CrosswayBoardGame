@@ -1,5 +1,6 @@
 package org.boardgames.crossway.controller;
 
+import org.boardgames.crossway.model.Player;
 import org.boardgames.crossway.model.Stone;
 import org.boardgames.crossway.utils.Messages;
 
@@ -98,10 +99,11 @@ public class DialogHandler {
      * @param winner the player who won the game.
      * @return an integer representing the chosen action.
      */
-    int showWinDialog(Stone winner) {
+//    int showWinDialog(Stone winner) {
+    int showWinDialog(Player winner) {
         return JOptionPane.showOptionDialog(
                 frame,
-                "%s %s".formatted(winner, Messages.get("game.wins")),
+                "%s %s".formatted(winner.getName(), Messages.get("game.wins")),
                 Messages.get("game.over"),
                 JOptionPane.DEFAULT_OPTION,
                 JOptionPane.INFORMATION_MESSAGE,
@@ -113,5 +115,35 @@ public class DialogHandler {
                 },
                 Messages.get("menu.game.restart")
         );
+    }
+
+    /**
+     * Prompts the user for the players' names.
+     *
+     * @return an array containing the black player's name at index 0 and the white player's name at index 1.
+     */
+    String[] askPlayerNames() {
+        JTextField blackField = new JTextField();
+        JTextField whiteField = new JTextField();
+
+        Object[] message = {
+                Messages.get("dialog.players.black"), blackField,
+                Messages.get("dialog.players.white"), whiteField
+        };
+
+        int option = JOptionPane.showConfirmDialog(
+                frame,
+                message,
+                Messages.get("dialog.players.title"),
+                JOptionPane.OK_CANCEL_OPTION
+        );
+
+        if (option != JOptionPane.OK_OPTION) {
+            return new String[]{"Black", "White"};
+        }
+
+        String blackName = blackField.getText().isBlank() ? "Black" : blackField.getText().trim();
+        String whiteName = whiteField.getText().isBlank() ? "White" : whiteField.getText().trim();
+        return new String[]{blackName, whiteName};
     }
 }

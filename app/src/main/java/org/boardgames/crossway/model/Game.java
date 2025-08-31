@@ -333,12 +333,9 @@ public class Game {
 
     /**
      * Swaps the colors of all stones on the board and in the move history,
-     * toggles the current player, and disables the pie rule.
+     * and disables the pie rule without altering the current turn.
      */
     public void swapColors() {
-        board.swapColors();
-        history.swapColors();
-        currentPlayer = currentPlayer.opposite();
         pieAvailable = false;
         notifyListeners();
     }

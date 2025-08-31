@@ -4,6 +4,7 @@ import org.boardgames.crossway.model.Game;
 import org.boardgames.crossway.model.Move;
 import org.boardgames.crossway.model.Point;
 import org.boardgames.crossway.model.Stone;
+import org.boardgames.crossway.model.PlayerManager;
 import org.boardgames.crossway.utils.Messages;
 
 
@@ -34,6 +35,12 @@ public class GameController {
     /** A callback to be executed when the application exit is requested. */
     private final Runnable exitCallback;
 
+    /** Manages players and scores. */
+    private final PlayerManager playerManager;
+
+    /** Callback to refresh the scoreboard label. */
+    private final Runnable scoreboardRefresh;
+
     /**
      * Constructs a new {@code GameController} with the specified dependencies and callbacks.
      *
@@ -49,13 +56,17 @@ public class GameController {
                           DialogHandler dialogHandler,
                           Runnable newGameCallback,
                           Runnable restartCallback,
-                          Runnable exitCallback) {
+                          Runnable exitCallback,
+                          PlayerManager playerManager,
+                          Runnable scoreboardRefresh) {
         this.game = game;
         this.uiController = uiController;
         this.dialogHandler = dialogHandler;
         this.newGameCallback = newGameCallback;
         this.restartCallback = restartCallback;
         this.exitCallback = exitCallback;
+        this.playerManager = playerManager;
+        this.scoreboardRefresh = scoreboardRefresh;
     }
 
     /**
@@ -93,11 +104,16 @@ public class GameController {
 
         if (game.isPieAvailable() && dialogHandler.askPieSwap()) {
             game.swapColors();
+            playerManager.swapColors();
+            scoreboardRefresh.run();
             uiController.updateHistoryDisplay(game.getMoveHistory());
+            uiController.refreshWindow();
         }
 
         if (game.hasWon(currentPlayer)) {
-            processWinDialogChoice(dialogHandler.showWinDialog(currentPlayer));
+            playerManager.recordWin(currentPlayer);
+            scoreboardRefresh.run();
+            processWinDialogChoice(dialogHandler.showWinDialog(playerManager.getPlayer(currentPlayer)));
         }
     }
 
