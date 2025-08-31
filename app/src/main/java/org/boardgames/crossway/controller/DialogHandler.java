@@ -1,5 +1,8 @@
 package org.boardgames.crossway.controller;
 
+import org.boardgames.crossway.model.Stone;
+import org.boardgames.crossway.utils.Messages;
+
 import javax.swing.*;
 
 /**
@@ -68,5 +71,47 @@ public class DialogHandler {
      */
     void showError(String title, String message) {
         JOptionPane.showMessageDialog(frame, message, title, JOptionPane.ERROR_MESSAGE);
+    }
+
+    /**
+     * Prompts the user to decide whether to swap colors using the pie rule.
+     *
+     * @return {@code true} if the user chooses to swap, {@code false} otherwise.
+     */
+    boolean askPieSwap() {
+        int choice = JOptionPane.showOptionDialog(
+                frame,
+                Messages.get("game.swapPrompt"),
+                Messages.get("game.swap"),
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                new Object[]{Messages.get("game.swap"), Messages.get("game.continue")},
+                Messages.get("game.continue")
+        );
+        return choice == JOptionPane.YES_OPTION;
+    }
+
+    /**
+     * Shows a dialog informing the user that a player has won and returns the user's choice.
+     *
+     * @param winner the player who won the game.
+     * @return an integer representing the chosen action.
+     */
+    int showWinDialog(Stone winner) {
+        return JOptionPane.showOptionDialog(
+                frame,
+                "%s %s".formatted(winner, Messages.get("game.wins")),
+                Messages.get("game.over"),
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.INFORMATION_MESSAGE,
+                null,
+                new Object[]{
+                        Messages.get("menu.game.new"),
+                        Messages.get("menu.game.restart"),
+                        Messages.get("menu.file.exit")
+                },
+                Messages.get("menu.game.restart")
+        );
     }
 }
