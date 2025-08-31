@@ -9,11 +9,13 @@ available in the [Rules.md](Rules.md) file.
 ```
 app/
 └── src/main/java/org/boardgames/crossway/
-    ├── App.java       # Entry point
-    ├── controller/    # Input handling and game flow
-    ├── model/         # Game logic and board rules
-    ├── ui/            # User interface components
-    └── utils/         # Helper utilities
+    ├── App.java
+    ├── controller/
+    ├── model/
+    │   ├── rules/
+    │   └── ...
+    ├── ui/
+    └── utils/
 ```
 
 ## Run the Application
