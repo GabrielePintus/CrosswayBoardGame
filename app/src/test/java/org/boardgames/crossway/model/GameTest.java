@@ -134,15 +134,25 @@ public class GameTest {
     }
 
     @Test
-    @DisplayName("swapColors flips board and player")
+    @DisplayName("swapColors keeps stones and switches current player")
     void testSwapColors() {
         Game game = new Game(BoardSize.SMALL);
         Move move = new Move(new Point(0, 0), Stone.BLACK);
         game.makeMove(move);
         game.swapColors();
-        assertEquals(Optional.of(Stone.WHITE), game.getBoard().stoneAt(new Point(0, 0)), "Stones should flip");
-        assertEquals(Stone.BLACK, game.getCurrentPlayer(), "Player should switch after swap");
+        assertEquals(Optional.of(Stone.BLACK), game.getBoard().stoneAt(new Point(0, 0)), "Stones should remain unchanged");
+        assertEquals(Stone.WHITE, game.getCurrentPlayer(), "Turn should switch to white after swap");
         assertFalse(game.isPieAvailable(), "Pie rule should be disabled after swap");
+    }
+
+    @Test
+    @DisplayName("swapColors leaves current player unchanged")
+    void testSwapColorsKeepsCurrentPlayer() {
+        Game game = new Game(BoardSize.SMALL);
+        game.makeMove(new Move(new Point(0, 0), Stone.BLACK));
+        Stone playerBeforeSwap = game.getCurrentPlayer();
+        game.swapColors();
+        assertEquals(playerBeforeSwap, game.getCurrentPlayer(), "Current player should remain the same after swap");
     }
 
     @Test

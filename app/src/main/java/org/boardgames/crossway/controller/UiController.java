@@ -43,9 +43,9 @@ public class UiController {
      * @param controller The main application controller.
      * @param game The initial game model.
      */
-    public UiController(CrosswayController controller, Game game) {
+    public UiController(CrosswayController controller,Game game, JLabel scoreboardLabel) {
         initializeComponents(game);
-        setupUserInterface(controller);
+        setupUserInterface(controller, scoreboardLabel);
     }
 
     /**
@@ -74,8 +74,8 @@ public class UiController {
      *
      * @param controller The main application controller.
      */
-    private void setupUserInterface(CrosswayController controller) {
-        frame = FrameFactory.createFrame(controller);
+    private void setupUserInterface(CrosswayController controller, JLabel scoreboardLabel) {
+        frame = FrameFactory.createFrame(controller, scoreboardLabel);
         frame.add(splitPane, BorderLayout.CENTER);
         frame.pack();
         splitPane.setDividerLocation(splitPane.getWidth());

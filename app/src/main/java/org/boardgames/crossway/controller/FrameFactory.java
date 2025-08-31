@@ -31,14 +31,14 @@ abstract class FrameFactory {
      * @param controller The main application controller that handles window events and menu actions.
      * @return A ready-to-use {@link JFrame} instance.
      */
-    static JFrame createFrame(CrosswayController controller) {
+    static JFrame createFrame(CrosswayController controller, JLabel scoreboardLabel) {
         // Create the main application window.
         JFrame frame = new JFrame(WINDOW_TITLE);
 
         // Configure the main window properties.
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(true);
-        frame.setJMenuBar(MenuBarFactory.createMenuBar(controller));
+        frame.setJMenuBar(MenuBarFactory.createMenuBar(controller, scoreboardLabel));
 
         // Initialize the split pane with the board and history views.
         frame.getContentPane().removeAll();
