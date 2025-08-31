@@ -236,7 +236,7 @@ public class Game {
 
         // Record the move in the history.
         history.commit(move);
-        pieAvailable = history.getPastMoves().size() == 1;
+        updatePieAvailability();
 
         // Switch to the next player.
         currentPlayer = currentPlayer.opposite();
@@ -252,6 +252,17 @@ public class Game {
     public void skipTurn() {
         currentPlayer = currentPlayer.opposite();
         notifyListeners();
+    }
+
+    /**
+     * Updates the availability of the pie rule swap option.
+     *
+     * <p>The pie rule allows the second player to swap colors after
+     * the first move. This method checks the move history to determine
+     * if the pie rule is still available (i.e., only one move has been made).</p>
+     */
+    private void updatePieAvailability() {
+        pieAvailable = history.getPastMoves().size() == 1;
     }
 
     // ========== Undo/Redo Operations ==========
@@ -282,7 +293,7 @@ public class Game {
         // The current player becomes the one who just had their move undone.
         currentPlayer = lastMove.getStone();
 
-        pieAvailable = history.getPastMoves().size() == 1;
+        updatePieAvailability();
 
         notifyListeners();
     }
@@ -315,7 +326,7 @@ public class Game {
         board.placeStone(move.getPoint(), move.getStone());
         currentPlayer = currentPlayer.opposite();
 
-        pieAvailable = history.getPastMoves().size() == 1;
+        updatePieAvailability();
 
         notifyListeners();
     }
