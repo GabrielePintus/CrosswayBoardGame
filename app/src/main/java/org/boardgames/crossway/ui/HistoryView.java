@@ -7,6 +7,7 @@ import org.boardgames.crossway.utils.Messages;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * Collapsible view component for displaying move history.
@@ -88,7 +89,7 @@ public class HistoryView extends JPanel {
      */
     public void updateHistory(List<Move> moves) {
         listModel.clear();
-        for (int i = 0; i < moves.size(); i++) {
+        IntStream.range(0, moves.size()).forEach(i -> {
             Move move = moves.get(i);
             String moveText = String.format("%d. %s (%d,%d)",
                     i + 1,
@@ -97,7 +98,7 @@ public class HistoryView extends JPanel {
                     move.getPoint().y()
             );
             listModel.addElement(moveText);
-        }
+        });
 
         // Auto-scroll to bottom
         if (!listModel.isEmpty()) moveList.ensureIndexIsVisible(listModel.getSize() - 1);

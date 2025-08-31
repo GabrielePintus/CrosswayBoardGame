@@ -22,7 +22,9 @@ abstract class ViewMenuFactory extends MenuFactory {
      */
     static JMenu createViewMenu(CrosswayController controller) {
         JMenu viewMenu = new JMenu(Messages.get("menu.view"));
-        viewMenu.add(createMenuItem(Messages.get("menu.view.showHistory"), controller::handleShowHistoryRequest));
+        JMenuItem historyItem = createMenuItem(Messages.get("menu.view.showHistory"), controller::handleShowHistoryRequest);
+        controller.setHistoryMenuItem(historyItem);
+        viewMenu.add(historyItem);
         return viewMenu;
     }
 }

@@ -37,7 +37,7 @@ public abstract class MenuBarFactory {
 
         // Add a "glue" component to push the buttons to the far right.
         menuBar.add(Box.createHorizontalGlue());
-        menuBar.add(scoreboardController.getScoreboardLabel());
+        menuBar.add(scoreboardController.getScoreboardComponent());
         menuBar.add(Box.createHorizontalGlue());
         addRightAlignedButtons(menuBar, controller);
 

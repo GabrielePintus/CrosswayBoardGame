@@ -1,14 +1,11 @@
 package org.boardgames.crossway.controller;
 
 import org.boardgames.crossway.model.*;
-import org.boardgames.crossway.utils.GameSerializer;
-import org.boardgames.crossway.utils.JsonUtils;
+import org.boardgames.crossway.ui.SwingScoreboardView;
 import org.boardgames.crossway.utils.Messages;
 import org.boardgames.crossway.utils.Settings;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import java.io.File;
 import java.util.Locale;
 
 /**
@@ -120,7 +117,8 @@ public class CrosswayController {
         this.dialogHandler = new DialogHandler(uiController.getFrame());
         uiController.setDialogHandler(dialogHandler);
         String[] names = dialogHandler.askPlayerNames();
-        this.scoreboardController = new ScoreboardController(names[0], names[1], new JLabel(), dialogHandler);
+        SwingScoreboardView scoreboardView = new SwingScoreboardView();
+        this.scoreboardController = new ScoreboardController(names[0], names[1], scoreboardView, dialogHandler);
         this.fileController = new FileController(() -> game, this::updateGame, uiController, dialogHandler);
         this.gameController = new GameController(
                 game,
@@ -178,6 +176,15 @@ public class CrosswayController {
      */
     private void attachEventHandlers() {
         uiController.getBoardView().setBoardClickCallback(gameController::processBoardClick);
+    }
+
+    /**
+     * Injects the menu item used to toggle the history view into the UI controller.
+     *
+     * @param historyMenuItem the menu item created by the menu factory
+     */
+    public void setHistoryMenuItem(JMenuItem historyMenuItem) {
+        uiController.setHistoryMenuItem(historyMenuItem);
     }
 
     // ==================== Menu Actions ====================
