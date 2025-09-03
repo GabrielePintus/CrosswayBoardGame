@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Unit tests for the {@link Point} record, verifying the correctness of its neighbor detection logic.
  */
-public class PointTest {
+class PointTest {
 
     /**
      * Tests the {@link Point#isNeighbourOf(Point)} method to ensure a point correctly identifies

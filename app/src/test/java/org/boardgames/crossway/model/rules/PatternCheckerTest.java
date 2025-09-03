@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * validating moves against a set of predefined game rules.
  * </p>
  */
-public class PatternCheckerTest {
+class PatternCheckerTest {
 
     Board board;
     PatternChecker checker;

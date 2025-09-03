@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Unit tests for the {@link History} class, which manages the history of moves in a game.
  * It tests the core functionalities of committing, undoing, redoing, and swapping move colors.
  */
-public class HistoryTest {
+class HistoryTest {
 
     /**
      * Tests the default constructor of the {@link History} class.

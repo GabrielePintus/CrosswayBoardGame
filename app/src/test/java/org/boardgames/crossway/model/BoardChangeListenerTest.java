@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * This class verifies that the single abstract method {@code onBoardChange}
  * is correctly implemented and invoked with the expected board object.
  */
-public class BoardChangeListenerTest {
+class BoardChangeListenerTest {
 
     /**
      * Tests the invocation of the {@code onBoardChange} method on a listener.

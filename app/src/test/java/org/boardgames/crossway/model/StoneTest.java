@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * This class verifies the correctness of the enum's behavior, including
  * the `opposite` and `getStoneName` methods.
  */
-public class StoneTest {
+class StoneTest {
 
     /**
      * Tests that the opposite of a BLACK stone is correctly returned as WHITE.

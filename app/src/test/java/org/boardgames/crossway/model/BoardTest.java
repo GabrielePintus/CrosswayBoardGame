@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * stone placement, and utility methods like coordinate validation and
  * serialization.
  */
-public class BoardTest {
+class BoardTest {
 
     /**
      * Tests the constructor of the {@link Board} class when provided with a {@link BoardSize}.

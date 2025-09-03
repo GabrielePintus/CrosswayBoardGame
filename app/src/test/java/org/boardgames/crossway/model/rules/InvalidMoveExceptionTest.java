@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * as expected.
  * </p>
  */
-public class InvalidMoveExceptionTest {
+class InvalidMoveExceptionTest {
 
     /**
      * Tests that the exception's message is correctly formatted with
