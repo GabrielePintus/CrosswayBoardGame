@@ -58,11 +58,6 @@ For larger changes, please discuss them first by opening an issue to avoid confl
 
 ## Planned features
 
-- [ ] Add player management (e.g., player names, scores).
-- [ ] Implement explicitly the pie rule
-- [ ] Add multi-language support.
-- [ ] Improve the user interface with more visual feedback.
-- [ ] Add sound effects and music.
 - [ ] Add network multiplayer support.
 - [ ] Implement an AI opponent for single-player mode.
 
