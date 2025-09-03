@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Unit tests for the {@link Game} class, covering its core functionalities from initialization
  * and move management to game rules, state persistence, and win condition checks.
  */
-public class GameTest {
+class GameTest {
 
     /**
      * Tests the {@link Game#Game(Board)} constructor.

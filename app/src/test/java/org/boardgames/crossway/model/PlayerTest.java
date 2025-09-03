@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * name, stone color, and win count.
  * </p>
  */
-public class PlayerTest {
+class PlayerTest {
 
     /**
      * Tests that the getter methods (`getName()`, `getColor()`, and `getWins()`)

@@ -55,7 +55,7 @@ tasks.named<Test>("test") {
 }
 
 tasks.named<Zip>("distZip") {
-    archiveFileName.set("CrossWay-1.1.0-BETA.zip")
+    archiveFileName.set("CrossWay-2.0.0.zip")
 }
 
 tasks.withType<JavaCompile>().configureEach {

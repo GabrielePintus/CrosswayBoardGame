@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * winning conditions for both Black and White stones on a game board.
  * </p>
  */
-public class ConnectionCheckerTest {
+class ConnectionCheckerTest {
 
     /**
      * Tests whether the {@link ConnectionChecker} correctly detects a winning

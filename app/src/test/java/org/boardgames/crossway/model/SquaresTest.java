@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Unit tests for the {@link Squares} utility class, verifying the correctness of its methods related to
  * identifying potential top-left corners of 2x2 squares on a game board.
  */
-public class SquaresTest {
+class SquaresTest {
 
     /**
      * Tests the {@link Squares#topLeftsAround(Board, Point)} method for a central point on a 5x5 board.

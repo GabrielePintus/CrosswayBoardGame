@@ -1,5 +1,6 @@
-package org.boardgames.crossway.model;
+package org.boardgames.crossway.model.rules;
 
+import org.boardgames.crossway.model.*;
 import org.boardgames.crossway.model.rules.EmptyRule;
 import org.boardgames.crossway.model.rules.PatternViolation;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * stone can only be placed on an empty cell on the board.
  * </p>
  */
-public class EmptyRuleTest {
+class EmptyRuleTest {
 
     /**
      * Tests that the {@link EmptyRule#validate(Board, Move)} method returns an

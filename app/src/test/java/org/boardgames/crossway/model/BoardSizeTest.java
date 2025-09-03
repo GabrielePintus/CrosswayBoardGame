@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Unit tests for the {@link BoardSize} record, verifying its immutability and
  * the correctness of its utility methods for validating coordinates.
  */
-public class BoardSizeTest {
+class BoardSizeTest {
 
     /**
      * Tests the {@link BoardSize#size()} method.

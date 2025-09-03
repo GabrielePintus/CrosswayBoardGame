@@ -40,15 +40,6 @@ public class CrosswayController {
     private static final String[] BOARD_SIZE_OPTIONS = Messages.getPrefixedArray("menu.game.boardSize");
 
     /**
-     * Options presented in the win dialog after a game ends.
-     */
-    private static final String[] WIN_DIALOG_OPTIONS = {
-            Messages.get("menu.game.new"),
-            Messages.get("menu.game.restart"),
-            Messages.get("menu.file.exit")
-    };
-
-    /**
      * The default index for board size selection, corresponding to "Regular".
      */
     private static final int DEFAULT_SIZE_INDEX = Integer.parseInt(Settings.get("board.defaultSizeIndex"));

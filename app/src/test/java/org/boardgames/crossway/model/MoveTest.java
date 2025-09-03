@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Unit tests for the {@link Move} class, verifying its functionality including constructor behavior,
  * equality checks, and hash code consistency.
  */
-public class MoveTest {
+class MoveTest {
 
     /**
      * Tests the constructor of the {@link Move} class to ensure that it correctly

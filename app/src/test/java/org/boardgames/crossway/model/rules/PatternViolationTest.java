@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * stores and provides access to the values passed to its constructor.
  * </p>
  */
-public class PatternViolationTest {
+class PatternViolationTest {
 
     /**
      * Tests that the `PatternViolation` record correctly stores the provided
